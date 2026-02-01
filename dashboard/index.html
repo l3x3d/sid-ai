@@ -9,7 +9,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root { --green: #00ff41; --red: #ff3333; --cyan: #00ffff; --purple: #bf5fff; --bg: #0a0a0a; }
     body { background: var(--bg); color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 14px; min-height: 100vh; overflow: hidden; }
-    .container { display: grid; grid-template-columns: 1fr 400px; grid-template-rows: auto 1fr auto; height: 100vh; gap: 1px; background: #333; }
+    .container { display: grid; grid-template-columns: 1fr 420px; grid-template-rows: auto 1fr auto; height: 100vh; gap: 1px; background: #333; }
     .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #111; border-bottom: 1px solid #333; }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-text { font-size: 20px; font-weight: bold; }
@@ -31,10 +31,13 @@
     .sidebar { display: flex; flex-direction: column; gap: 1px; background: #333; }
     .sidebar-section { background: var(--bg); padding: 12px; }
     .section-title { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-    #lobster-container { width: 100%; height: 280px; }
+    #lobster-container { width: 100%; height: 320px; position: relative; }
     #lobster-canvas { width: 100%; height: 100%; cursor: grab; }
-    .mood-indicator { text-align: center; font-size: 12px; color: #666; margin-top: 5px; }
-    .mood-indicator .mood { color: var(--purple); }
+    .anim-controls { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .anim-btn { background: #1a1a1a; border: 1px solid #333; color: var(--cyan); padding: 4px 8px; font-family: inherit; font-size: 11px; cursor: pointer; border-radius: 3px; }
+    .anim-btn:hover { border-color: var(--cyan); }
+    .anim-btn.active { background: var(--cyan); color: #000; }
+    .blend-slider { width: 100%; margin: 8px 0; }
     .commands { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .cmd-btn { background: #1a1a1a; border: 1px solid #333; color: var(--green); padding: 8px 10px; font-family: inherit; font-size: 12px; cursor: pointer; transition: all 0.1s; }
     .cmd-btn:hover { background: #222; border-color: var(--green); }
@@ -64,9 +67,18 @@
     </div>
     <div class="sidebar">
       <div class="sidebar-section">
-        <div class="section-title">🦞 SID</div>
+        <div class="section-title">🦞 SID - Skeletal Animation</div>
         <div id="lobster-container"><canvas id="lobster-canvas"></canvas></div>
-        <div class="mood-indicator">Mood: <span class="mood" id="mood">Chill</span></div>
+        <div class="anim-controls">
+          <button class="anim-btn active" onclick="setAnimation('idle')">Idle</button>
+          <button class="anim-btn" onclick="setAnimation('walk')">Walk</button>
+          <button class="anim-btn" onclick="setAnimation('excited')">Excited</button>
+          <button class="anim-btn" onclick="setAnimation('talk')">Talk</button>
+          <button class="anim-btn" onclick="setAnimation('snap')">Snap!</button>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#666">
+          Blend: <input type="range" class="blend-slider" id="blendSlider" min="0" max="100" value="0" oninput="setBlendWeight(this.value/100)">
+        </div>
       </div>
       <div class="sidebar-section">
         <div class="section-title">⚡ Commands</div>
@@ -79,355 +91,695 @@
       </div>
     </div>
     <div class="footer">
-      <span>SID v2.0</span>
+      <span>SID v3.0 - Skeletal Rig</span>
       <span id="connection">● Connected</span>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-  <script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  
+  <script type="module">
+import * as THREE from 'three';
+
 // =====================================================
-// PROCEDURAL ANIMATED LOBSTER - Physics-based movement
+// SKELETAL LOBSTER WITH ANIMATION BLENDING
 // =====================================================
 
-let scene, camera, renderer;
-let lobsterGroup, bodyParts = {};
-let mouseX = 0, mouseY = 0, targetRotY = 0;
-let clock, mood = 'chill';
+let scene, camera, renderer, clock;
+let skeleton, skinnedMesh, mixer;
+let animations = {};
+let currentAction, previousAction;
+let mouseX = 0, mouseY = 0;
 
-// Inverse Kinematics Chain for legs/antennae
-class IKChain {
-  constructor(segments, segmentLength, basePos, constraints = {}) {
-    this.segments = [];
-    this.segmentLength = segmentLength;
-    this.basePos = basePos.clone();
-    this.target = basePos.clone();
-    this.constraints = { minAngle: -0.8, maxAngle: 0.8, ...constraints };
-    
-    let pos = basePos.clone();
-    for (let i = 0; i < segments; i++) {
-      this.segments.push({
-        pos: pos.clone(),
-        angle: 0,
-        velocity: 0
-      });
-      pos.y -= segmentLength;
-    }
-  }
-  
-  solve(target, deltaTime) {
-    this.target.lerp(target, 0.1);
-    
-    // FABRIK-like solving
-    // Forward pass
-    this.segments[this.segments.length - 1].pos.copy(this.target);
-    for (let i = this.segments.length - 2; i >= 0; i--) {
-      const dir = this.segments[i].pos.clone().sub(this.segments[i + 1].pos).normalize();
-      this.segments[i].pos.copy(this.segments[i + 1].pos).add(dir.multiplyScalar(this.segmentLength));
-    }
-    
-    // Backward pass
-    this.segments[0].pos.copy(this.basePos);
-    for (let i = 1; i < this.segments.length; i++) {
-      const dir = this.segments[i].pos.clone().sub(this.segments[i - 1].pos).normalize();
-      this.segments[i].pos.copy(this.segments[i - 1].pos).add(dir.multiplyScalar(this.segmentLength));
-      
-      // Add spring physics
-      const springForce = (Math.random() - 0.5) * 0.01;
-      this.segments[i].velocity += springForce;
-      this.segments[i].velocity *= 0.95; // damping
-      this.segments[i].pos.x += this.segments[i].velocity;
-    }
-  }
-  
-  getPositions() {
-    return this.segments.map(s => s.pos.clone());
-  }
-}
+// Animation state
+const animState = {
+  current: 'idle',
+  blendWeight: 0,
+  crossFadeTime: 0.3
+};
 
-// Soft body physics for body segments
-class SoftBody {
-  constructor(restPos, stiffness = 0.3, damping = 0.8) {
-    this.restPos = restPos.clone();
-    this.pos = restPos.clone();
-    this.velocity = new THREE.Vector3();
-    this.stiffness = stiffness;
-    this.damping = damping;
-  }
-  
-  update(parentPos, deltaTime) {
-    // Spring force towards rest position relative to parent
-    const targetPos = parentPos.clone().add(this.restPos);
-    const force = targetPos.clone().sub(this.pos).multiplyScalar(this.stiffness);
-    this.velocity.add(force);
-    this.velocity.multiplyScalar(this.damping);
-    this.pos.add(this.velocity.clone().multiplyScalar(deltaTime * 60));
-  }
-}
-
-function initLobster() {
+function init() {
   const container = document.getElementById('lobster-container');
   const canvas = document.getElementById('lobster-canvas');
   
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-  camera.position.set(0, 0.5, 6);
+  camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(0, 1, 8);
+  camera.lookAt(0, 0, 0);
   
   renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   
   clock = new THREE.Clock();
   
   // Lighting
-  const ambient = new THREE.AmbientLight(0x404040, 1.5);
-  scene.add(ambient);
+  scene.add(new THREE.AmbientLight(0x404040, 2));
   
-  const key = new THREE.SpotLight(0xbf5fff, 3, 20, 0.5, 0.5);
-  key.position.set(3, 4, 5);
+  const key = new THREE.SpotLight(0xbf5fff, 4, 30, 0.6, 0.5);
+  key.position.set(5, 8, 8);
   key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
   scene.add(key);
   
-  const fill = new THREE.PointLight(0x00ff41, 1.5, 15);
-  fill.position.set(-4, -2, 3);
+  const fill = new THREE.PointLight(0x00ff41, 2, 20);
+  fill.position.set(-5, -2, 4);
   scene.add(fill);
   
-  const rim = new THREE.PointLight(0x00ffff, 1, 10);
-  rim.position.set(0, 2, -4);
+  const rim = new THREE.PointLight(0x00ffff, 1.5, 15);
+  rim.position.set(0, 3, -6);
   scene.add(rim);
   
-  buildProceduralLobster();
+  // Build the skeletal lobster
+  buildSkeletalLobster();
+  
+  // Create animations
+  createAnimations();
+  
+  // Setup interaction
   setupInteraction(canvas);
+  
+  // Start animation loop
   animate();
+  
+  // Handle resize
+  window.addEventListener('resize', onResize);
 }
 
-function buildProceduralLobster() {
-  lobsterGroup = new THREE.Group();
+function buildSkeletalLobster() {
+  // === CREATE SKELETON ===
+  const bones = [];
+  const boneNames = {};
   
-  // Materials with subsurface scattering look
-  const shellMat = new THREE.MeshPhysicalMaterial({
+  // Root bone
+  const rootBone = new THREE.Bone();
+  rootBone.name = 'root';
+  rootBone.position.set(0, 0, 0);
+  bones.push(rootBone);
+  boneNames.root = 0;
+  
+  // Body spine (5 segments)
+  let parentBone = rootBone;
+  for (let i = 0; i < 5; i++) {
+    const bone = new THREE.Bone();
+    bone.name = `body_${i}`;
+    bone.position.set(-0.3, 0, 0);
+    parentBone.add(bone);
+    bones.push(bone);
+    boneNames[`body_${i}`] = bones.length - 1;
+    parentBone = bone;
+  }
+  
+  // Tail (6 segments)
+  for (let i = 0; i < 6; i++) {
+    const bone = new THREE.Bone();
+    bone.name = `tail_${i}`;
+    bone.position.set(-0.25, 0, 0);
+    parentBone.add(bone);
+    bones.push(bone);
+    boneNames[`tail_${i}`] = bones.length - 1;
+    parentBone = bone;
+  }
+  
+  // Tail fan
+  const tailFan = new THREE.Bone();
+  tailFan.name = 'tail_fan';
+  tailFan.position.set(-0.2, 0, 0);
+  parentBone.add(tailFan);
+  bones.push(tailFan);
+  boneNames.tail_fan = bones.length - 1;
+  
+  // Head (from body_0)
+  const head = new THREE.Bone();
+  head.name = 'head';
+  head.position.set(0.5, 0.1, 0);
+  bones[boneNames.body_0].add(head);
+  bones.push(head);
+  boneNames.head = bones.length - 1;
+  
+  // Eyes
+  ['left', 'right'].forEach((side, idx) => {
+    const eyeStalk = new THREE.Bone();
+    eyeStalk.name = `eye_stalk_${side}`;
+    eyeStalk.position.set(0.15, 0.2, (idx === 0 ? -0.15 : 0.15));
+    head.add(eyeStalk);
+    bones.push(eyeStalk);
+    boneNames[`eye_stalk_${side}`] = bones.length - 1;
+    
+    const eye = new THREE.Bone();
+    eye.name = `eye_${side}`;
+    eye.position.set(0.05, 0.15, 0);
+    eyeStalk.add(eye);
+    bones.push(eye);
+    boneNames[`eye_${side}`] = bones.length - 1;
+  });
+  
+  // Claws (from body_0)
+  ['left', 'right'].forEach((side, idx) => {
+    const z = idx === 0 ? -0.4 : 0.4;
+    
+    const shoulder = new THREE.Bone();
+    shoulder.name = `claw_shoulder_${side}`;
+    shoulder.position.set(0.2, 0, z);
+    bones[boneNames.body_0].add(shoulder);
+    bones.push(shoulder);
+    boneNames[`claw_shoulder_${side}`] = bones.length - 1;
+    
+    const upperArm = new THREE.Bone();
+    upperArm.name = `claw_upper_${side}`;
+    upperArm.position.set(0.3, 0, 0);
+    shoulder.add(upperArm);
+    bones.push(upperArm);
+    boneNames[`claw_upper_${side}`] = bones.length - 1;
+    
+    const forearm = new THREE.Bone();
+    forearm.name = `claw_forearm_${side}`;
+    forearm.position.set(0.25, 0, 0);
+    upperArm.add(forearm);
+    bones.push(forearm);
+    boneNames[`claw_forearm_${side}`] = bones.length - 1;
+    
+    const pincer = new THREE.Bone();
+    pincer.name = `claw_pincer_${side}`;
+    pincer.position.set(0.2, 0, 0);
+    forearm.add(pincer);
+    bones.push(pincer);
+    boneNames[`claw_pincer_${side}`] = bones.length - 1;
+    
+    const pincerTop = new THREE.Bone();
+    pincerTop.name = `claw_pincer_top_${side}`;
+    pincerTop.position.set(0.1, 0.05, 0);
+    pincer.add(pincerTop);
+    bones.push(pincerTop);
+    boneNames[`claw_pincer_top_${side}`] = bones.length - 1;
+  });
+  
+  // Legs (8 total, from body segments)
+  for (let i = 0; i < 4; i++) {
+    ['left', 'right'].forEach((side, idx) => {
+      const bodyIdx = Math.min(i, 3);
+      const z = idx === 0 ? -0.3 : 0.3;
+      
+      const hip = new THREE.Bone();
+      hip.name = `leg_hip_${i}_${side}`;
+      hip.position.set(-0.1, -0.1, z);
+      bones[boneNames[`body_${bodyIdx}`]].add(hip);
+      bones.push(hip);
+      boneNames[`leg_hip_${i}_${side}`] = bones.length - 1;
+      
+      const knee = new THREE.Bone();
+      knee.name = `leg_knee_${i}_${side}`;
+      knee.position.set(0, -0.2, idx === 0 ? -0.1 : 0.1);
+      hip.add(knee);
+      bones.push(knee);
+      boneNames[`leg_knee_${i}_${side}`] = bones.length - 1;
+      
+      const foot = new THREE.Bone();
+      foot.name = `leg_foot_${i}_${side}`;
+      foot.position.set(0, -0.15, idx === 0 ? -0.05 : 0.05);
+      knee.add(foot);
+      bones.push(foot);
+      boneNames[`leg_foot_${i}_${side}`] = bones.length - 1;
+    });
+  }
+  
+  // Antennae
+  ['left', 'right'].forEach((side, idx) => {
+    let parent = head;
+    for (let i = 0; i < 8; i++) {
+      const antenna = new THREE.Bone();
+      antenna.name = `antenna_${side}_${i}`;
+      if (i === 0) {
+        antenna.position.set(0.2, 0.05, idx === 0 ? -0.1 : 0.1);
+      } else {
+        antenna.position.set(0.12, 0.03, 0);
+      }
+      parent.add(antenna);
+      bones.push(antenna);
+      boneNames[`antenna_${side}_${i}`] = bones.length - 1;
+      parent = antenna;
+    }
+  });
+  
+  skeleton = new THREE.Skeleton(bones);
+  
+  // === CREATE SKINNED GEOMETRY ===
+  const geometry = new THREE.BufferGeometry();
+  const vertices = [];
+  const normals = [];
+  const uvs = [];
+  const skinIndices = [];
+  const skinWeights = [];
+  const indices = [];
+  
+  // Helper to add a segment mesh attached to a bone
+  function addSegment(boneIdx, radius, length, offsetX = 0, squash = { x: 1, y: 1, z: 1 }) {
+    const segments = 12;
+    const rings = 8;
+    const startVertex = vertices.length / 3;
+    
+    for (let ring = 0; ring <= rings; ring++) {
+      const v = ring / rings;
+      const y = (v - 0.5) * length + offsetX;
+      
+      for (let seg = 0; seg <= segments; seg++) {
+        const u = seg / segments;
+        const theta = u * Math.PI * 2;
+        
+        const sinTheta = Math.sin(theta);
+        const cosTheta = Math.cos(theta);
+        
+        // Taper the ends
+        const taper = 1 - Math.pow(Math.abs(v - 0.5) * 2, 2) * 0.3;
+        const r = radius * taper;
+        
+        vertices.push(
+          y,
+          cosTheta * r * squash.y,
+          sinTheta * r * squash.z
+        );
+        
+        normals.push(0, cosTheta, sinTheta);
+        uvs.push(u, v);
+        
+        // Skin weights - fully weighted to this bone
+        skinIndices.push(boneIdx, 0, 0, 0);
+        skinWeights.push(1, 0, 0, 0);
+      }
+    }
+    
+    // Generate indices
+    for (let ring = 0; ring < rings; ring++) {
+      for (let seg = 0; seg < segments; seg++) {
+        const a = startVertex + ring * (segments + 1) + seg;
+        const b = a + 1;
+        const c = a + segments + 1;
+        const d = c + 1;
+        
+        indices.push(a, b, c);
+        indices.push(b, d, c);
+      }
+    }
+  }
+  
+  // Add body segments
+  for (let i = 0; i < 5; i++) {
+    addSegment(boneNames[`body_${i}`], 0.35 - i * 0.03, 0.35, 0, { x: 1, y: 0.7, z: 0.85 });
+  }
+  
+  // Add tail segments
+  for (let i = 0; i < 6; i++) {
+    addSegment(boneNames[`tail_${i}`], 0.25 - i * 0.025, 0.22, 0, { x: 1, y: 0.8, z: 0.9 });
+  }
+  
+  // Add head
+  addSegment(boneNames.head, 0.38, 0.45, 0.1, { x: 1.1, y: 0.75, z: 0.7 });
+  
+  // Add claws
+  ['left', 'right'].forEach(side => {
+    addSegment(boneNames[`claw_upper_${side}`], 0.1, 0.28);
+    addSegment(boneNames[`claw_forearm_${side}`], 0.12, 0.24);
+    addSegment(boneNames[`claw_pincer_${side}`], 0.1, 0.2);
+    addSegment(boneNames[`claw_pincer_top_${side}`], 0.06, 0.18);
+  });
+  
+  // Add legs
+  for (let i = 0; i < 4; i++) {
+    ['left', 'right'].forEach(side => {
+      addSegment(boneNames[`leg_hip_${i}_${side}`], 0.04, 0.15);
+      addSegment(boneNames[`leg_knee_${i}_${side}`], 0.03, 0.18);
+      addSegment(boneNames[`leg_foot_${i}_${side}`], 0.025, 0.12);
+    });
+  }
+  
+  // Add antennae
+  ['left', 'right'].forEach(side => {
+    for (let i = 0; i < 8; i++) {
+      addSegment(boneNames[`antenna_${side}_${i}`], 0.02 - i * 0.002, 0.1);
+    }
+  });
+  
+  // Add eyes
+  ['left', 'right'].forEach(side => {
+    addSegment(boneNames[`eye_stalk_${side}`], 0.04, 0.12);
+    addSegment(boneNames[`eye_${side}`], 0.08, 0.1);
+  });
+  
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+  geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  
+  // Material
+  const material = new THREE.MeshPhysicalMaterial({
     color: 0xbf5fff,
     metalness: 0.1,
     roughness: 0.3,
     clearcoat: 0.8,
     clearcoatRoughness: 0.2,
-    emissive: 0x1a0033,
-    emissiveIntensity: 0.15
+    emissive: 0x2a0055,
+    emissiveIntensity: 0.2
   });
   
-  const clawMat = new THREE.MeshPhysicalMaterial({
-    color: 0x9f3fff,
-    metalness: 0.15,
-    roughness: 0.25,
-    clearcoat: 1,
-    clearcoatRoughness: 0.1
-  });
+  // Create skinned mesh
+  skinnedMesh = new THREE.SkinnedMesh(geometry, material);
+  skinnedMesh.add(rootBone);
+  skinnedMesh.bind(skeleton);
+  skinnedMesh.castShadow = true;
+  skinnedMesh.receiveShadow = true;
   
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ff41 });
-  const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  // Rotate to face camera
+  skinnedMesh.rotation.y = Math.PI / 2;
   
-  // === BODY (segmented with soft body physics) ===
-  bodyParts.bodySegments = [];
-  bodyParts.bodySoftBodies = [];
+  scene.add(skinnedMesh);
   
+  // Store bone names for animation
+  skinnedMesh.userData.boneNames = boneNames;
+  
+  // Create mixer
+  mixer = new THREE.AnimationMixer(skinnedMesh);
+}
+
+function createAnimations() {
+  const boneNames = skinnedMesh.userData.boneNames;
+  const fps = 30;
+  
+  // === IDLE ANIMATION ===
+  const idleTracks = [];
+  
+  // Gentle body sway
   for (let i = 0; i < 5; i++) {
-    const size = 0.4 - i * 0.03;
-    const geo = new THREE.SphereGeometry(size, 24, 18);
-    // Squash into lobster shape
-    geo.scale(1.3, 0.75, 0.85);
-    
-    const mesh = new THREE.Mesh(geo, shellMat.clone());
-    mesh.position.x = -i * 0.28;
-    mesh.castShadow = true;
-    lobsterGroup.add(mesh);
-    bodyParts.bodySegments.push(mesh);
-    
-    if (i > 0) {
-      bodyParts.bodySoftBodies.push(new SoftBody(new THREE.Vector3(-0.28, 0, 0), 0.4, 0.85));
-    }
+    const times = [0, 1, 2, 3, 4];
+    const values = [];
+    times.forEach((t, idx) => {
+      const angle = Math.sin(t * Math.PI / 2) * 0.03 * (i + 1);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, Math.sin(t * Math.PI / 2 + i) * 0.02));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    idleTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`body_${i}`]].uuid}.quaternion`,
+      times, values
+    ));
   }
   
-  // === HEAD ===
-  const headGeo = new THREE.SphereGeometry(0.45, 24, 20);
-  headGeo.scale(1.2, 0.8, 0.7);
-  const head = new THREE.Mesh(headGeo, shellMat);
-  head.position.set(0.55, 0.05, 0);
-  head.castShadow = true;
-  lobsterGroup.add(head);
-  bodyParts.head = head;
-  
-  // Rostrum (pointy nose)
-  const rostrumGeo = new THREE.ConeGeometry(0.12, 0.5, 8);
-  const rostrum = new THREE.Mesh(rostrumGeo, shellMat);
-  rostrum.rotation.z = -Math.PI / 2;
-  rostrum.position.set(1.0, 0.1, 0);
-  lobsterGroup.add(rostrum);
-  
-  // === EYES (on stalks, will track mouse) ===
-  bodyParts.eyes = [];
-  bodyParts.eyeStalks = [];
-  
-  [-1, 1].forEach((side, idx) => {
-    // Eye stalk
-    const stalkGeo = new THREE.CapsuleGeometry(0.04, 0.2, 8, 8);
-    const stalk = new THREE.Mesh(stalkGeo, shellMat);
-    stalk.position.set(0.7, 0.25, side * 0.18);
-    lobsterGroup.add(stalk);
-    bodyParts.eyeStalks.push(stalk);
-    
-    // Eye ball
-    const eyeGroup = new THREE.Group();
-    const eyeBall = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeMat);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), pupilMat);
-    pupil.position.z = 0.06;
-    const eyelid = new THREE.Mesh(
-      new THREE.SphereGeometry(0.105, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-      shellMat
-    );
-    eyelid.rotation.x = Math.PI;
-    eyelid.visible = false;
-    
-    eyeGroup.add(eyeBall, pupil, eyelid);
-    eyeGroup.position.set(0.75, 0.42, side * 0.22);
-    eyeGroup.userData = { pupil, eyelid, baseY: 0.42 };
-    lobsterGroup.add(eyeGroup);
-    bodyParts.eyes.push(eyeGroup);
-  });
-  
-  // === CLAWS (with pincer animation) ===
-  bodyParts.claws = [];
-  
-  [-1, 1].forEach((side, idx) => {
-    const clawGroup = new THREE.Group();
-    
-    // Arm segments
-    const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.09, 0.35, 8, 12), clawMat);
-    upperArm.rotation.z = Math.PI / 2 + side * 0.5;
-    upperArm.position.set(0.18, 0, 0);
-    clawGroup.add(upperArm);
-    
-    const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.3, 8, 12), clawMat);
-    forearm.position.set(0.5, side * 0.08, 0);
-    forearm.rotation.z = side * 0.4;
-    clawGroup.add(forearm);
-    
-    // Pincer group (animated open/close)
-    const pincerGroup = new THREE.Group();
-    pincerGroup.position.set(0.7, side * 0.05, 0);
-    
-    // Main claw (bottom)
-    const mainClawGeo = new THREE.BoxGeometry(0.35, 0.12, 0.1);
-    mainClawGeo.translate(0.15, 0, 0);
-    const mainClaw = new THREE.Mesh(mainClawGeo, clawMat);
-    mainClaw.position.y = -0.04;
-    pincerGroup.add(mainClaw);
-    
-    // Moving claw (top)
-    const topClawGeo = new THREE.BoxGeometry(0.3, 0.08, 0.08);
-    topClawGeo.translate(0.12, 0, 0);
-    const topClaw = new THREE.Mesh(topClawGeo, clawMat);
-    topClaw.position.set(0, 0.06, 0);
-    topClaw.userData.restRotation = 0;
-    pincerGroup.add(topClaw);
-    pincerGroup.userData = { topClaw, isSnapping: false, snapPhase: 0 };
-    
-    clawGroup.add(pincerGroup);
-    clawGroup.position.set(0.35, 0, side * 0.5);
-    clawGroup.rotation.y = side * 0.7;
-    clawGroup.userData = { side, pincerGroup, baseRotX: 0, baseRotZ: 0 };
-    
-    lobsterGroup.add(clawGroup);
-    bodyParts.claws.push(clawGroup);
-  });
-  
-  // === TAIL (with IK physics) ===
-  bodyParts.tailSegments = [];
-  bodyParts.tailChain = new IKChain(6, 0.22, new THREE.Vector3(-1.1, 0, 0));
-  
+  // Tail gentle wave
   for (let i = 0; i < 6; i++) {
-    const size = 0.28 - i * 0.03;
-    const geo = new THREE.CylinderGeometry(size * 0.85, size, 0.18, 12);
-    const seg = new THREE.Mesh(geo, shellMat);
-    seg.rotation.z = Math.PI / 2;
-    seg.castShadow = true;
-    lobsterGroup.add(seg);
-    bodyParts.tailSegments.push(seg);
+    const times = [0, 1, 2, 3, 4];
+    const values = [];
+    times.forEach((t) => {
+      const angle = Math.sin(t * Math.PI / 2 + i * 0.5) * 0.08;
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle * 0.5, angle, 0));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    idleTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`tail_${i}`]].uuid}.quaternion`,
+      times, values
+    ));
   }
   
-  // Tail fan
-  const fanGroup = new THREE.Group();
-  [-1, 0, 1].forEach(angle => {
-    const fanGeo = new THREE.CircleGeometry(0.22, 12, 0, Math.PI * 0.85);
-    const fan = new THREE.Mesh(fanGeo, shellMat);
-    fan.rotation.y = Math.PI / 2;
-    fan.rotation.z = angle * 0.5;
-    fan.position.x = 0.05;
-    fanGroup.add(fan);
+  // Claw idle movement
+  ['left', 'right'].forEach((side, idx) => {
+    const times = [0, 1.5, 3, 4];
+    const values = [];
+    times.forEach((t) => {
+      const angle = Math.sin(t * Math.PI / 2) * 0.15 * (idx === 0 ? 1 : -1);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, angle * 0.5));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    idleTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`claw_shoulder_${side}`]].uuid}.quaternion`,
+      times, values
+    ));
   });
-  fanGroup.position.x = -2.3;
-  lobsterGroup.add(fanGroup);
-  bodyParts.tailFan = fanGroup;
   
-  // === LEGS (8 legs with IK) ===
-  bodyParts.legs = [];
-  bodyParts.legChains = [];
+  // Antenna wave
+  ['left', 'right'].forEach((side, idx) => {
+    for (let i = 0; i < 8; i++) {
+      const times = [0, 1, 2, 3, 4];
+      const values = [];
+      times.forEach((t) => {
+        const angle = Math.sin(t * Math.PI / 2 + i * 0.3) * 0.15 * (idx === 0 ? 1 : -1);
+        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle * 0.3, angle, 0));
+        values.push(q.x, q.y, q.z, q.w);
+      });
+      idleTracks.push(new THREE.QuaternionKeyframeTrack(
+        `${skeleton.bones[boneNames[`antenna_${side}_${i}`]].uuid}.quaternion`,
+        times, values
+      ));
+    }
+  });
   
+  // Eye look around
+  ['left', 'right'].forEach(side => {
+    const times = [0, 1.5, 3, 4];
+    const values = [];
+    times.forEach((t, idx) => {
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+        Math.sin(t) * 0.2,
+        Math.cos(t * 0.7) * 0.3,
+        0
+      ));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    idleTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`eye_${side}`]].uuid}.quaternion`,
+      times, values
+    ));
+  });
+  
+  const idleClip = new THREE.AnimationClip('idle', 4, idleTracks);
+  animations.idle = mixer.clipAction(idleClip);
+  animations.idle.setLoop(THREE.LoopRepeat);
+  
+  // === WALK ANIMATION ===
+  const walkTracks = [];
+  const walkDuration = 1;
+  
+  // Leg walking cycle
   for (let i = 0; i < 4; i++) {
-    [-1, 1].forEach(side => {
-      const legGroup = new THREE.Group();
-      const basePos = new THREE.Vector3(-0.1 + i * 0.25, -0.15, side * 0.35);
+    ['left', 'right'].forEach((side, idx) => {
+      const phase = (i * 0.25 + (idx === 0 ? 0 : 0.5)) % 1;
       
-      // Create leg segments
-      for (let j = 0; j < 3; j++) {
-        const thickness = 0.025 - j * 0.005;
-        const length = 0.2 - j * 0.03;
-        const seg = new THREE.Mesh(
-          new THREE.CapsuleGeometry(thickness, length, 4, 6),
-          shellMat
-        );
-        seg.castShadow = true;
-        legGroup.add(seg);
-      }
-      
-      legGroup.position.copy(basePos);
-      lobsterGroup.add(legGroup);
-      bodyParts.legs.push(legGroup);
-      
-      // IK chain for this leg
-      const chain = new IKChain(3, 0.15, basePos);
-      bodyParts.legChains.push({ chain, group: legGroup, side, index: i });
+      ['hip', 'knee', 'foot'].forEach((joint, jIdx) => {
+        const times = [0, 0.25, 0.5, 0.75, 1];
+        const values = [];
+        times.forEach((t) => {
+          const cycle = (t + phase) % 1;
+          let angle;
+          if (joint === 'hip') {
+            angle = Math.sin(cycle * Math.PI * 2) * 0.4;
+          } else if (joint === 'knee') {
+            angle = Math.max(0, Math.sin(cycle * Math.PI * 2)) * 0.6;
+          } else {
+            angle = Math.sin(cycle * Math.PI * 2 + 0.5) * 0.3;
+          }
+          const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, (idx === 0 ? -1 : 1) * 0.2));
+          values.push(q.x, q.y, q.z, q.w);
+        });
+        walkTracks.push(new THREE.QuaternionKeyframeTrack(
+          `${skeleton.bones[boneNames[`leg_${joint}_${i}_${side}`]].uuid}.quaternion`,
+          times, values
+        ));
+      });
     });
   }
   
-  // === ANTENNAE (long, flowing with physics) ===
-  bodyParts.antennae = [];
-  bodyParts.antennaChains = [];
+  // Body bob
+  const bodyBobTimes = [0, 0.25, 0.5, 0.75, 1];
+  const bodyBobValues = [];
+  bodyBobTimes.forEach(t => {
+    const y = Math.sin(t * Math.PI * 4) * 0.03;
+    bodyBobValues.push(0, y, 0);
+  });
+  walkTracks.push(new THREE.VectorKeyframeTrack(
+    `${skeleton.bones[boneNames.root].uuid}.position`,
+    bodyBobTimes, bodyBobValues
+  ));
   
-  [-1, 1].forEach(side => {
-    const antennaGroup = new THREE.Group();
-    const segments = 12;
-    
-    for (let i = 0; i < segments; i++) {
-      const thickness = 0.02 - i * 0.0012;
-      const seg = new THREE.Mesh(
-        new THREE.CylinderGeometry(thickness, thickness * 1.1, 0.15, 6),
-        clawMat
-      );
-      antennaGroup.add(seg);
-    }
-    
-    antennaGroup.position.set(0.9, 0.15, side * 0.12);
-    lobsterGroup.add(antennaGroup);
-    bodyParts.antennae.push(antennaGroup);
-    
-    const chain = new IKChain(segments, 0.14, new THREE.Vector3(0.9, 0.15, side * 0.12), { minAngle: -1.2, maxAngle: 1.2 });
-    bodyParts.antennaChains.push({ chain, group: antennaGroup, side });
+  const walkClip = new THREE.AnimationClip('walk', walkDuration, walkTracks);
+  animations.walk = mixer.clipAction(walkClip);
+  animations.walk.setLoop(THREE.LoopRepeat);
+  
+  // === EXCITED ANIMATION ===
+  const excitedTracks = [];
+  const excitedDuration = 0.5;
+  
+  // Fast tail wag
+  for (let i = 0; i < 6; i++) {
+    const times = [0, 0.125, 0.25, 0.375, 0.5];
+    const values = [];
+    times.forEach((t) => {
+      const angle = Math.sin(t * Math.PI * 8 + i) * 0.2;
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, angle, angle * 0.5));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    excitedTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`tail_${i}`]].uuid}.quaternion`,
+      times, values
+    ));
+  }
+  
+  // Claw waving
+  ['left', 'right'].forEach((side, idx) => {
+    const times = [0, 0.125, 0.25, 0.375, 0.5];
+    const values = [];
+    times.forEach((t) => {
+      const angle = Math.sin(t * Math.PI * 8) * 0.5 * (idx === 0 ? 1 : -1);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, angle * 0.5, 0));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    excitedTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`claw_shoulder_${side}`]].uuid}.quaternion`,
+      times, values
+    ));
   });
   
-  lobsterGroup.position.y = 0;
-  scene.add(lobsterGroup);
+  // Body bounce
+  const bounceTimes = [0, 0.125, 0.25, 0.375, 0.5];
+  const bounceValues = [];
+  bounceTimes.forEach(t => {
+    bounceValues.push(0, Math.abs(Math.sin(t * Math.PI * 4)) * 0.1, 0);
+  });
+  excitedTracks.push(new THREE.VectorKeyframeTrack(
+    `${skeleton.bones[boneNames.root].uuid}.position`,
+    bounceTimes, bounceValues
+  ));
+  
+  const excitedClip = new THREE.AnimationClip('excited', excitedDuration, excitedTracks);
+  animations.excited = mixer.clipAction(excitedClip);
+  animations.excited.setLoop(THREE.LoopRepeat);
+  
+  // === TALK ANIMATION ===
+  const talkTracks = [];
+  const talkDuration = 0.4;
+  
+  // Head bob
+  const headTimes = [0, 0.1, 0.2, 0.3, 0.4];
+  const headValues = [];
+  headTimes.forEach(t => {
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+      Math.sin(t * Math.PI * 10) * 0.1,
+      Math.sin(t * Math.PI * 5) * 0.05,
+      0
+    ));
+    headValues.push(q.x, q.y, q.z, q.w);
+  });
+  talkTracks.push(new THREE.QuaternionKeyframeTrack(
+    `${skeleton.bones[boneNames.head].uuid}.quaternion`,
+    headTimes, headValues
+  ));
+  
+  // Claw gestures
+  ['left', 'right'].forEach((side, idx) => {
+    const times = [0, 0.2, 0.4];
+    const values = [];
+    times.forEach((t, i) => {
+      const angle = (i === 1 ? 0.4 : 0) * (idx === 0 ? 1 : -1);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, angle * 0.3));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    talkTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`claw_forearm_${side}`]].uuid}.quaternion`,
+      times, values
+    ));
+  });
+  
+  const talkClip = new THREE.AnimationClip('talk', talkDuration, talkTracks);
+  animations.talk = mixer.clipAction(talkClip);
+  animations.talk.setLoop(THREE.LoopRepeat);
+  
+  // === SNAP ANIMATION ===
+  const snapTracks = [];
+  const snapDuration = 0.3;
+  
+  ['left', 'right'].forEach(side => {
+    // Pincer snap
+    const times = [0, 0.1, 0.15, 0.2, 0.3];
+    const values = [];
+    times.forEach((t, i) => {
+      let angle = 0;
+      if (i === 0) angle = 0.5;  // Open
+      else if (i === 1) angle = 0.6;  // Wide open
+      else if (i === 2) angle = -0.1; // Snap shut
+      else if (i === 3) angle = 0;
+      else angle = 0;
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, 0));
+      values.push(q.x, q.y, q.z, q.w);
+    });
+    snapTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`claw_pincer_top_${side}`]].uuid}.quaternion`,
+      times, values
+    ));
+    
+    // Claw thrust forward
+    const thrustTimes = [0, 0.1, 0.2, 0.3];
+    const thrustValues = [];
+    thrustTimes.forEach((t, i) => {
+      const angle = i === 1 ? 0.3 : 0;
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, angle * (side === 'left' ? 1 : -1)));
+      thrustValues.push(q.x, q.y, q.z, q.w);
+    });
+    snapTracks.push(new THREE.QuaternionKeyframeTrack(
+      `${skeleton.bones[boneNames[`claw_shoulder_${side}`]].uuid}.quaternion`,
+      thrustTimes, thrustValues
+    ));
+  });
+  
+  const snapClip = new THREE.AnimationClip('snap', snapDuration, snapTracks);
+  animations.snap = mixer.clipAction(snapClip);
+  animations.snap.setLoop(THREE.LoopOnce);
+  animations.snap.clampWhenFinished = true;
+  
+  // Start with idle
+  currentAction = animations.idle;
+  currentAction.play();
 }
+
+window.setAnimation = function(name) {
+  if (!animations[name]) return;
+  
+  // Update button states
+  document.querySelectorAll('.anim-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().replace('!', '') === name);
+  });
+  
+  previousAction = currentAction;
+  currentAction = animations[name];
+  
+  if (previousAction !== currentAction) {
+    previousAction.fadeOut(animState.crossFadeTime);
+  }
+  
+  currentAction.reset()
+    .setEffectiveTimeScale(1)
+    .setEffectiveWeight(1)
+    .fadeIn(animState.crossFadeTime)
+    .play();
+  
+  animState.current = name;
+  
+  // Snap goes back to idle
+  if (name === 'snap') {
+    setTimeout(() => window.setAnimation('idle'), 400);
+  }
+};
+
+window.setBlendWeight = function(weight) {
+  animState.blendWeight = weight;
+  // Could be used to blend between two animations
+};
 
 function setupInteraction(canvas) {
   canvas.addEventListener('mousemove', (e) => {
@@ -437,12 +789,7 @@ function setupInteraction(canvas) {
   });
   
   canvas.addEventListener('click', () => {
-    // Trigger claw snap
-    bodyParts.claws.forEach(claw => {
-      claw.userData.pincerGroup.userData.isSnapping = true;
-      claw.userData.pincerGroup.userData.snapPhase = 0;
-    });
-    setMood('excited');
+    window.setAnimation('snap');
   });
   
   let isDragging = false, lastX = 0;
@@ -450,183 +797,59 @@ function setupInteraction(canvas) {
   canvas.addEventListener('mouseup', () => isDragging = false);
   canvas.addEventListener('mouseleave', () => isDragging = false);
   canvas.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      targetRotY += (e.clientX - lastX) * 0.01;
+    if (isDragging && skinnedMesh) {
+      skinnedMesh.rotation.y += (e.clientX - lastX) * 0.01;
       lastX = e.clientX;
     }
   });
 }
 
-function setMood(m) {
-  mood = m;
-  document.getElementById('mood').textContent = { chill: 'Chill', excited: 'Hyped!', thinking: 'Thinking...', speaking: 'Speaking' }[m] || 'Chill';
-  if (m === 'excited') setTimeout(() => { if (mood === 'excited') mood = 'chill'; }, 3000);
+function onResize() {
+  const container = document.getElementById('lobster-container');
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
 }
 
 function animate() {
   requestAnimationFrame(animate);
   
   const delta = clock.getDelta();
-  const time = clock.getElapsedTime();
-  const speedMult = mood === 'excited' ? 2.5 : 1;
   
-  if (!lobsterGroup) return;
-  
-  // Smooth rotation
-  if (!window.isDragging) targetRotY += mouseX * 0.003;
-  lobsterGroup.rotation.y += (targetRotY - lobsterGroup.rotation.y) * 0.05;
-  lobsterGroup.rotation.x += (-mouseY * 0.2 - lobsterGroup.rotation.x) * 0.05;
-  
-  // Breathing/floating
-  const breathe = Math.sin(time * 1.5 * speedMult) * 0.08;
-  lobsterGroup.position.y = breathe;
-  
-  // === BODY WAVE ===
-  bodyParts.bodySegments.forEach((seg, i) => {
-    if (i > 0 && bodyParts.bodySoftBodies[i - 1]) {
-      const soft = bodyParts.bodySoftBodies[i - 1];
-      const parentPos = bodyParts.bodySegments[i - 1].position;
-      soft.update(parentPos, delta);
-    }
-    const wave = Math.sin(time * 2 * speedMult + i * 0.5) * 0.02;
-    seg.position.y = wave;
-    seg.rotation.z = Math.sin(time * 1.5 * speedMult + i * 0.3) * 0.05;
-  });
-  
-  // === EYE TRACKING ===
-  bodyParts.eyes.forEach((eye, idx) => {
-    const lookX = mouseX * 0.4;
-    const lookY = -mouseY * 0.3;
-    eye.rotation.y += (lookX - eye.rotation.y) * 0.1;
-    eye.rotation.x += (lookY - eye.rotation.x) * 0.1;
-    
-    // Blinking
-    if (Math.random() < 0.002) {
-      const eyelid = eye.userData.eyelid;
-      eye.scale.y = 0.1;
-      setTimeout(() => { eye.scale.y = 1; }, 80);
-    }
-    
-    // Eye bob
-    eye.position.y = eye.userData.baseY + Math.sin(time * 3 + idx) * 0.01;
-  });
-  
-  // === CLAW ANIMATION ===
-  bodyParts.claws.forEach((claw, idx) => {
-    const side = claw.userData.side;
-    const pincer = claw.userData.pincerGroup;
-    const topClaw = pincer.userData.topClaw;
-    
-    // Idle wave
-    claw.rotation.x = Math.sin(time * 1.2 * speedMult + idx * Math.PI) * 0.15;
-    claw.rotation.z = claw.userData.baseRotZ + Math.sin(time * 0.8 * speedMult) * 0.1 * side;
-    
-    // Snap animation
-    if (pincer.userData.isSnapping) {
-      pincer.userData.snapPhase += delta * 15;
-      const snap = Math.sin(pincer.userData.snapPhase * 3) * 0.5;
-      topClaw.rotation.z = Math.max(0, snap);
-      
-      if (pincer.userData.snapPhase > 2) {
-        pincer.userData.isSnapping = false;
-        topClaw.rotation.z = 0;
-      }
-    } else {
-      // Idle pincer movement
-      topClaw.rotation.z = Math.sin(time * 2 + idx) * 0.1;
-    }
-  });
-  
-  // === TAIL PHYSICS ===
-  const tailTarget = new THREE.Vector3(
-    -2.5 + Math.sin(time * speedMult) * 0.3,
-    Math.sin(time * 1.5 * speedMult) * 0.2,
-    Math.sin(time * 0.7 * speedMult) * 0.15
-  );
-  bodyParts.tailChain.solve(tailTarget, delta);
-  const tailPositions = bodyParts.tailChain.getPositions();
-  
-  bodyParts.tailSegments.forEach((seg, i) => {
-    if (tailPositions[i]) {
-      seg.position.copy(tailPositions[i]);
-      if (tailPositions[i + 1]) {
-        const dir = tailPositions[i + 1].clone().sub(tailPositions[i]);
-        seg.rotation.z = Math.PI / 2 + Math.atan2(dir.y, dir.x);
-      }
-      seg.position.y += Math.sin(time * 2 * speedMult + i * 0.4) * 0.03;
-    }
-  });
-  
-  // Tail fan follows last segment
-  if (tailPositions[5]) {
-    bodyParts.tailFan.position.copy(tailPositions[5]);
-    bodyParts.tailFan.position.x -= 0.2;
-    bodyParts.tailFan.rotation.z = Math.sin(time * 3 * speedMult) * 0.2;
+  if (mixer) {
+    mixer.update(delta);
   }
   
-  // === LEG IK ===
-  bodyParts.legChains.forEach(({ chain, group, side, index }, i) => {
-    const walkPhase = time * 3 * speedMult + index * 0.8 + (side > 0 ? Math.PI : 0);
-    const stepHeight = Math.max(0, Math.sin(walkPhase)) * 0.1;
-    const stepForward = Math.cos(walkPhase) * 0.08;
-    
-    const target = chain.basePos.clone();
-    target.y -= 0.4 + stepHeight;
-    target.x += stepForward;
-    target.z += side * (0.15 + Math.sin(time + i) * 0.05);
-    
-    chain.solve(target, delta);
-    const positions = chain.getPositions();
-    
-    group.children.forEach((seg, j) => {
-      if (positions[j] && positions[j + 1]) {
-        const start = positions[j];
-        const end = positions[j + 1];
-        const mid = start.clone().add(end).multiplyScalar(0.5);
-        seg.position.copy(mid).sub(chain.basePos);
-        
-        const dir = end.clone().sub(start);
-        seg.rotation.z = Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z));
-        seg.rotation.y = Math.atan2(dir.x, dir.z);
+  // Eye tracking (additive on top of animation)
+  if (skinnedMesh) {
+    const boneNames = skinnedMesh.userData.boneNames;
+    ['left', 'right'].forEach(side => {
+      const eyeBone = skeleton.bones[boneNames[`eye_${side}`]];
+      if (eyeBone) {
+        // Add mouse tracking on top of animation
+        eyeBone.rotation.y += mouseX * 0.02;
+        eyeBone.rotation.x += -mouseY * 0.02;
       }
     });
-  });
-  
-  // === ANTENNAE FLOW ===
-  bodyParts.antennaChains.forEach(({ chain, group, side }, idx) => {
-    const flowTarget = new THREE.Vector3(
-      1.8 + Math.sin(time * 0.5 + idx) * 0.4 + mouseX * 0.3,
-      0.6 + Math.sin(time * 0.7 + idx * 2) * 0.3 - mouseY * 0.2,
-      side * (0.5 + Math.sin(time * 0.3) * 0.2)
-    );
     
-    chain.solve(flowTarget, delta);
-    const positions = chain.getPositions();
-    
-    group.children.forEach((seg, i) => {
-      if (positions[i] && positions[i + 1]) {
-        const start = positions[i];
-        const end = positions[i + 1];
-        seg.position.copy(start).sub(chain.basePos);
-        
-        const dir = end.clone().sub(start).normalize();
-        seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
-      }
-    });
-  });
-  
-  // === GLOW when speaking ===
-  if (mood === 'speaking') {
-    const pulse = (Math.sin(time * 12) + 1) / 2 * 0.4;
-    lobsterGroup.traverse(obj => {
-      if (obj.material && obj.material.emissiveIntensity !== undefined) {
-        obj.material.emissiveIntensity = 0.15 + pulse;
-      }
-    });
+    // Subtle follow for head
+    const headBone = skeleton.bones[boneNames.head];
+    if (headBone) {
+      headBone.rotation.y += mouseX * 0.01;
+      headBone.rotation.x += -mouseY * 0.01;
+    }
   }
   
   renderer.render(scene, camera);
 }
+
+// Start
+init();
+
+// Export for terminal
+window.triggerAnimation = function(name) {
+  window.setAnimation(name);
+};
 
 // ============ TERMINAL ============
 const SID_BACKEND = 'http://165.232.132.170:3456';
@@ -639,11 +862,10 @@ let audioUnlocked = false;
 
 function unlockAudio() {
   if (audioUnlocked) return;
-  audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAD/+1DEAAAHAAGf9AAAIwAANIAAAARMQU1FMy4xMDBVVVVVVVVV';
-  audioPlayer.play().then(() => { audioPlayer.pause(); audioUnlocked = true; log('🔊 Audio enabled', 'system'); }).catch(() => {});
+  audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAD/+1DEAAAHAAGf9AAAIwAANIAAAAQ=';
+  audioPlayer.play().then(() => { audioPlayer.pause(); audioUnlocked = true; log('🔊 Audio', 'system'); }).catch(() => {});
 }
 document.addEventListener('click', unlockAudio);
-document.addEventListener('keydown', unlockAudio);
 
 function log(text, type = '') {
   const line = document.createElement('div');
@@ -652,38 +874,27 @@ function log(text, type = '') {
   line.innerHTML = `<span class="timestamp">[${time}]</span> ${text}`;
   output.appendChild(line);
   output.scrollTop = output.scrollHeight;
-  while (output.children.length > 150) output.removeChild(output.firstChild);
+  while (output.children.length > 100) output.removeChild(output.firstChild);
 }
-
-function logSid(text) { log(`<span class="prefix">SID:</span> ${text}`, 'sid'); setMood('speaking'); }
 
 async function speak(text) {
   log(`🎙️ "${text}"`, 'voice');
-  setMood('speaking');
+  window.setAnimation('talk');
   try {
-    const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
+    const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
     const data = await resp.json().catch(() => ({}));
-    if (data.audioPath) {
-      audioPlayer.src = `${SID_URL}${data.audioPath}`;
-      audioPlayer.play().catch(e => log('Audio: ' + e.message, 'error'));
-    }
+    if (data.audioPath) { audioPlayer.src = `${SID_URL}${data.audioPath}`; audioPlayer.play().catch(() => {}); }
   } catch (e) { log('Voice error: ' + e.message, 'error'); }
-  setTimeout(() => setMood('chill'), text.split(' ').length * 250);
+  setTimeout(() => window.setAnimation('idle'), text.split(' ').length * 250);
 }
 
 const commands = {
-  help: () => log('Commands: gm, build, ship, hype, debug, deploy, test, clear', 'system'),
-  gm: () => speak("GM! Coffee's ready, VS Code is open. Let's ship something."),
-  build: () => { setMood('thinking'); speak("Alright, let's architect this. No spaghetti allowed."); },
-  ship: () => { setMood('excited'); speak("Ship it! Done is better than perfect."); },
-  hype: () => { setMood('excited'); speak("LET'S GOOO! We're shipping the future!"); },
-  debug: () => { setMood('thinking'); speak("Rubber duck time. Walk me through it."); },
-  deploy: () => { log('> Deploying...', 'system'); setTimeout(() => log('✓ Deployed!', 'success'), 2000); },
-  test: () => { log('> Running tests...', 'system'); setTimeout(() => log('✓ All passed', 'success'), 1500); },
+  help: () => log('Commands: gm, build, ship, hype, snap', 'system'),
+  gm: () => speak("GM! Coffee's ready. Let's ship something."),
+  build: () => { window.setAnimation('walk'); speak("Alright, let's build this."); },
+  ship: () => { window.setAnimation('excited'); speak("Ship it! Done is better than perfect."); },
+  hype: () => { window.setAnimation('excited'); speak("LET'S GOOO!"); },
+  snap: () => window.setAnimation('snap'),
   clear: () => { output.innerHTML = ''; }
 };
 
@@ -699,17 +910,14 @@ input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && input.value.
 function connectSSE() {
   const es = new EventSource(`${SID_URL}/events`);
   es.onopen = () => { document.getElementById('connection').innerHTML = '<span style="color:#00ff41">●</span> Connected'; };
-  es.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.type === 'speak') logSid(d.text); if (d.type === 'audio') { audioPlayer.src = `${SID_URL}${d.path}`; audioPlayer.play().catch(() => {}); } } catch {} };
+  es.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.type === 'speak') { log(`<span class="prefix">SID:</span> ${d.text}`, 'sid'); window.setAnimation('talk'); } if (d.type === 'audio') { audioPlayer.src = `${SID_URL}${d.path}`; audioPlayer.play().catch(() => {}); } } catch {} };
   es.onerror = () => setTimeout(connectSSE, 5000);
 }
 
-initLobster();
-log('🦞 SID v2.0 - Procedural Animation', 'system');
-log('Click lobster to snap claws!', 'system');
+log('🦞 SID v3.0 - Skeletal Animation', 'system');
+log('Click lobster to snap! Use buttons to blend.', 'system');
 connectSSE();
 setInterval(() => { document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
-document.addEventListener('click', () => input.focus());
-window.addEventListener('resize', () => { const c = document.getElementById('lobster-container'); camera.aspect = c.clientWidth / c.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(c.clientWidth, c.clientHeight); });
   </script>
 </body>
 </html>
