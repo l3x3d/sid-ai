@@ -154,11 +154,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
   
-  // Auth check for non-static routes
+  // Auth check - only protect write endpoints
   const url = new URL(req.url || '/', `http://localhost:${PORT}`);
-  const authRoutes = ['/speak', '/status', '/events'];
+  const protectedRoutes = ['/speak']; // Only protect speaking
   
-  if (authRoutes.some(r => url.pathname.startsWith(r))) {
+  if (protectedRoutes.some(r => url.pathname.startsWith(r))) {
     const authHeader = req.headers.authorization || url.searchParams.get('token');
     if (authHeader !== AUTH_TOKEN && authHeader !== `Bearer ${AUTH_TOKEN}`) {
       // Allow without auth for local requests
