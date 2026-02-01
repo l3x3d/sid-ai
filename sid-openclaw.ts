@@ -201,13 +201,25 @@ const server = http.createServer(async (req, res) => {
   if (url.pathname === '/speak' && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => body += chunk);
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { text, emotion } = JSON.parse(body);
-        sidSpeak(text, emotion || 'neutral');
-        res.writeHead(200);
-        res.end('ok');
-      } catch {
+        
+        // Generate audio synchronously and return path
+        let audioPath = null;
+        if (process.env.ELEVENLABS_API_KEY) {
+          const audioFile = path.join(AUDIO_DIR, `sid-${Date.now()}.mp3`);
+          await textToSpeech(text, audioFile);
+          audioPath = `/audio/${path.basename(audioFile)}`;
+          broadcastToClients({ type: 'audio', path: audioPath });
+        }
+        
+        broadcastToClients({ type: 'speak', text, emotion: emotion || 'neutral' });
+        console.log(`\n🎙️  SID: "${text}"\n`);
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, audioPath }));
+      } catch (e) {
         res.writeHead(400);
         res.end('invalid json');
       }

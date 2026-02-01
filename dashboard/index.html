@@ -551,7 +551,22 @@
     const output = document.getElementById('output');
     const input = document.getElementById('input');
     let eventSource = null;
-    let audioPlayer = null;
+    let audioPlayer = new Audio();
+    let audioUnlocked = false;
+    
+    // Unlock audio on first user interaction
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwfCo+OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+M4xAANCAKsAUAAAP/jOMQBDsgC1hzBgAAAAAA/8QAnf/jOMQBDsgCthzBgAAAAAA=';
+      audioPlayer.play().then(() => {
+        audioPlayer.pause();
+        audioUnlocked = true;
+        logSystem('🔊 Audio enabled');
+      }).catch(() => {});
+    }
+    
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
     
     function log(text, type = '') {
       const line = document.createElement('div');
@@ -573,9 +588,12 @@
     function logVoice(text) { log(`<span class="prefix">🎙️</span> ${text}`, 'voice'); }
     
     function playAudio(url) {
-      if (audioPlayer) audioPlayer.pause();
-      audioPlayer = new Audio(url);
-      audioPlayer.play().catch(e => logError('Audio: ' + e.message));
+      console.log('Playing audio:', url);
+      audioPlayer.src = url;
+      audioPlayer.play().catch(e => {
+        logError('Audio play failed: ' + e.message);
+        console.error('Audio error:', e);
+      });
     }
     
     async function speak(text, emotion = 'neutral') {
@@ -585,11 +603,17 @@
       document.getElementById('voice-status').style.color = '#00ff41';
       
       try {
-        await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
+        const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, emotion })
         });
+        
+        // Get the audio path from response
+        const data = await resp.json().catch(() => ({}));
+        if (data.audioPath) {
+          playAudio(`${SID_URL}${data.audioPath}`);
+        }
       } catch (e) {
         logError('Voice error: ' + e.message);
       }
