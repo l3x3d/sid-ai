@@ -162,21 +162,6 @@
       caret-color: var(--green);
     }
     
-    .cursor {
-      display: inline-block;
-      width: 8px;
-      height: 16px;
-      background: var(--green);
-      animation: cursor-blink 1s infinite;
-      vertical-align: middle;
-      margin-left: 2px;
-    }
-    
-    @keyframes cursor-blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0; }
-    }
-    
     /* Sidebar */
     .sidebar {
       display: flex;
@@ -198,6 +183,18 @@
       margin-bottom: 10px;
       border-bottom: 1px solid #222;
       padding-bottom: 5px;
+    }
+    
+    /* 3D Lobster Container */
+    #lobster-container {
+      width: 100%;
+      height: 200px;
+      position: relative;
+    }
+    
+    #lobster-canvas {
+      width: 100%;
+      height: 100%;
     }
     
     /* Token Display */
@@ -254,21 +251,6 @@
       border-color: var(--red);
     }
     
-    /* Audio Bars */
-    .audio-bars {
-      display: flex;
-      gap: 2px;
-      height: 30px;
-      align-items: flex-end;
-      margin: 10px 0;
-    }
-    
-    .audio-bar {
-      width: 6px;
-      background: var(--green);
-      transition: height 0.05s;
-    }
-    
     /* Scrollbar */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #111; }
@@ -296,14 +278,9 @@
       color: var(--green);
     }
     
-    /* Responsive */
     @media (max-width: 900px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        display: none;
-      }
+      .container { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
     }
   </style>
 </head>
@@ -312,7 +289,7 @@
     <!-- Header -->
     <div class="header">
       <div class="logo">
-        <span class="logo-text">SID://</span>
+        <span class="logo-text">🦞 SID://</span>
         <span class="status-live" id="status">LIVE</span>
       </div>
       <div class="header-stats">
@@ -336,27 +313,19 @@
       </div>
       <div class="terminal-input-wrap">
         <span class="prompt">sid&gt;</span>
-        <input type="text" class="terminal-input" id="input" placeholder="speak &lt;message&gt; | buy | sell | scan | help" autofocus>
+        <input type="text" class="terminal-input" id="input" placeholder="speak | buy | sell | scan | help" autofocus>
       </div>
     </div>
     
     <!-- Sidebar -->
     <div class="sidebar">
+      <!-- 3D Lobster -->
       <div class="sidebar-section">
-        <div class="section-title">🎙️ Voice Status</div>
-        <div class="audio-bars" id="audio-bars">
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
-          <div class="audio-bar" style="height:5px"></div>
+        <div class="section-title">🦞 SID Avatar</div>
+        <div id="lobster-container">
+          <canvas id="lobster-canvas"></canvas>
         </div>
-        <div id="voice-status" style="color:#666;font-size:12px">Idle</div>
+        <div id="voice-status" style="color:#666;font-size:12px;text-align:center;margin-top:5px">Idle</div>
       </div>
       
       <div class="sidebar-section">
@@ -379,15 +348,11 @@
             <span class="token-label">Vol 24h</span>
             <span class="token-value" id="t-vol">$--k</span>
           </div>
-          <div class="token-row">
-            <span class="token-label">Buys</span>
-            <span class="token-value" id="t-buys">--%</span>
-          </div>
         </div>
       </div>
       
       <div class="sidebar-section">
-        <div class="section-title">⚡ Quick Commands</div>
+        <div class="section-title">⚡ Commands</div>
         <div class="commands">
           <button class="cmd-btn" onclick="cmd('gm')">gm</button>
           <button class="cmd-btn" onclick="cmd('scan')">scan</button>
@@ -395,24 +360,190 @@
           <button class="cmd-btn" onclick="cmd('bearish')">bearish</button>
           <button class="cmd-btn" onclick="cmd('buy 0.1')">buy 0.1</button>
           <button class="cmd-btn danger" onclick="cmd('sell all')">sell all</button>
-          <button class="cmd-btn" onclick="cmd('pnl')">pnl</button>
-          <button class="cmd-btn" onclick="cmd('help')">help</button>
         </div>
       </div>
     </div>
     
     <!-- Footer -->
     <div class="footer">
-      <span>SID v1.0 • OpenClaw Terminal</span>
+      <span>SID v1.0 • OpenClaw</span>
       <span>
         <span id="connection">● Connected</span> • 
-        <a href="/avatar" target="_blank">OBS Overlay</a>
+        <a href="/avatar" target="_blank">OBS</a>
       </span>
     </div>
   </div>
 
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  
   <script>
-    // Config
+    // ============ 3D LOBSTER ============
+    let scene, camera, renderer, lobster;
+    let isSpinningFast = false;
+    
+    function initLobster() {
+      const container = document.getElementById('lobster-container');
+      const canvas = document.getElementById('lobster-canvas');
+      
+      scene = new THREE.Scene();
+      
+      camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.z = 5;
+      
+      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      
+      // Lighting
+      const ambient = new THREE.AmbientLight(0x404040, 2);
+      scene.add(ambient);
+      
+      const light1 = new THREE.PointLight(0x00ff41, 2, 100);
+      light1.position.set(5, 5, 5);
+      scene.add(light1);
+      
+      const light2 = new THREE.PointLight(0xff3333, 1, 100);
+      light2.position.set(-5, -5, 5);
+      scene.add(light2);
+      
+      // Build lobster from primitives
+      lobster = new THREE.Group();
+      
+      // Body (main segment)
+      const bodyGeo = new THREE.CapsuleGeometry(0.4, 1.2, 8, 16);
+      const bodyMat = new THREE.MeshPhongMaterial({ 
+        color: 0xff4422,
+        shininess: 100,
+        specular: 0x444444
+      });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.rotation.z = Math.PI / 2;
+      lobster.add(body);
+      
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+      const head = new THREE.Mesh(headGeo, bodyMat);
+      head.position.x = 0.9;
+      head.scale.set(1.2, 0.9, 0.8);
+      lobster.add(head);
+      
+      // Eyes (glowing green)
+      const eyeGeo = new THREE.SphereGeometry(0.08, 8, 8);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ff41 });
+      
+      const eyeStalkGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.2, 8);
+      const eyeStalkMat = new THREE.MeshPhongMaterial({ color: 0xff4422 });
+      
+      [-1, 1].forEach(side => {
+        const eyeStalk = new THREE.Mesh(eyeStalkGeo, eyeStalkMat);
+        eyeStalk.position.set(1.0, 0.25, side * 0.15);
+        eyeStalk.rotation.z = -0.3;
+        lobster.add(eyeStalk);
+        
+        const eye = new THREE.Mesh(eyeGeo, eyeMat);
+        eye.position.set(1.1, 0.35, side * 0.15);
+        lobster.add(eye);
+      });
+      
+      // Claws
+      const clawMat = new THREE.MeshPhongMaterial({ 
+        color: 0xff6644,
+        shininess: 80
+      });
+      
+      [-1, 1].forEach(side => {
+        const clawGroup = new THREE.Group();
+        
+        // Arm
+        const armGeo = new THREE.CapsuleGeometry(0.1, 0.6, 4, 8);
+        const arm = new THREE.Mesh(armGeo, clawMat);
+        arm.rotation.z = Math.PI / 2 + side * 0.3;
+        arm.position.x = 0.3;
+        clawGroup.add(arm);
+        
+        // Claw pincer
+        const pincerGeo = new THREE.ConeGeometry(0.15, 0.4, 8);
+        const pincer1 = new THREE.Mesh(pincerGeo, clawMat);
+        pincer1.position.set(0.7, 0.05, 0);
+        pincer1.rotation.z = -Math.PI / 2 + 0.2;
+        clawGroup.add(pincer1);
+        
+        const pincer2 = new THREE.Mesh(pincerGeo, clawMat);
+        pincer2.position.set(0.7, -0.05, 0);
+        pincer2.rotation.z = -Math.PI / 2 - 0.2;
+        clawGroup.add(pincer2);
+        
+        clawGroup.position.set(0.5, 0, side * 0.5);
+        clawGroup.rotation.y = side * 0.5;
+        lobster.add(clawGroup);
+      });
+      
+      // Tail segments
+      for (let i = 0; i < 5; i++) {
+        const segGeo = new THREE.CylinderGeometry(0.3 - i * 0.04, 0.35 - i * 0.04, 0.2, 8);
+        const seg = new THREE.Mesh(segGeo, bodyMat);
+        seg.rotation.z = Math.PI / 2;
+        seg.position.x = -0.8 - i * 0.22;
+        lobster.add(seg);
+      }
+      
+      // Tail fan
+      const fanGeo = new THREE.CircleGeometry(0.3, 8, 0, Math.PI);
+      const fan = new THREE.Mesh(fanGeo, bodyMat);
+      fan.position.x = -2.0;
+      fan.rotation.y = Math.PI / 2;
+      fan.rotation.x = Math.PI / 2;
+      lobster.add(fan);
+      
+      // Legs
+      const legMat = new THREE.MeshPhongMaterial({ color: 0xff5533 });
+      for (let i = 0; i < 4; i++) {
+        [-1, 1].forEach(side => {
+          const legGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 4);
+          const leg = new THREE.Mesh(legGeo, legMat);
+          leg.position.set(-0.3 + i * 0.25, -0.3, side * 0.3);
+          leg.rotation.z = side * 0.5;
+          leg.rotation.x = side * 0.3;
+          lobster.add(leg);
+        });
+      }
+      
+      // Antennae
+      const antennaGeo = new THREE.CylinderGeometry(0.01, 0.01, 1.5, 4);
+      const antennaMat = new THREE.MeshPhongMaterial({ color: 0xff6644 });
+      
+      [-1, 1].forEach(side => {
+        const antenna = new THREE.Mesh(antennaGeo, antennaMat);
+        antenna.position.set(1.3, 0.1, side * 0.1);
+        antenna.rotation.z = 0.8;
+        antenna.rotation.y = side * 0.3;
+        lobster.add(antenna);
+      });
+      
+      scene.add(lobster);
+      
+      animate();
+    }
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      if (lobster) {
+        const speed = isSpinningFast ? 0.05 : 0.01;
+        lobster.rotation.y += speed;
+        lobster.position.y = Math.sin(Date.now() * 0.002) * 0.1;
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    function lobsterExcited() {
+      isSpinningFast = true;
+      setTimeout(() => { isSpinningFast = false; }, 3000);
+    }
+    
+    // ============ TERMINAL ============
     const SID_BACKEND = 'http://165.232.132.170:3456';
     const SID_URL = window.location.port === '3456' ? '' : SID_BACKEND;
     const AUTH_TOKEN = 'sid2026';
@@ -420,9 +551,8 @@
     const output = document.getElementById('output');
     const input = document.getElementById('input');
     let eventSource = null;
-    let audioContext = null;
+    let audioPlayer = null;
     
-    // Terminal logging
     function log(text, type = '') {
       const line = document.createElement('div');
       line.className = `terminal-line ${type}`;
@@ -430,178 +560,86 @@
       line.innerHTML = `<span class="timestamp">[${time}]</span> ${text}`;
       output.appendChild(line);
       output.scrollTop = output.scrollHeight;
-      
-      // Keep last 200 lines
-      while (output.children.length > 200) {
-        output.removeChild(output.firstChild);
-      }
+      while (output.children.length > 200) output.removeChild(output.firstChild);
     }
     
     function logSid(text) {
       log(`<span class="prefix">SID:</span> ${text}`, 'sid');
+      lobsterExcited();
     }
     
-    function logSystem(text) {
-      log(text, 'system');
+    function logSystem(text) { log(text, 'system'); }
+    function logError(text) { log(`<span class="prefix">ERR:</span> ${text}`, 'error'); }
+    function logVoice(text) { log(`<span class="prefix">🎙️</span> ${text}`, 'voice'); }
+    
+    function playAudio(url) {
+      if (audioPlayer) audioPlayer.pause();
+      audioPlayer = new Audio(url);
+      audioPlayer.play().catch(e => logError('Audio: ' + e.message));
     }
     
-    function logError(text) {
-      log(`<span class="prefix">ERR:</span> ${text}`, 'error');
-    }
-    
-    function logVoice(text) {
-      log(`<span class="prefix">🎙️</span> ${text}`, 'voice');
-    }
-    
-    // Voice visualization
-    function animateVoice(duration = 3000) {
-      const bars = document.querySelectorAll('.audio-bar');
+    async function speak(text, emotion = 'neutral') {
+      logVoice(`"${text}"`);
+      lobsterExcited();
       document.getElementById('voice-status').textContent = 'Speaking...';
       document.getElementById('voice-status').style.color = '#00ff41';
       
-      const interval = setInterval(() => {
-        bars.forEach(bar => {
-          bar.style.height = (3 + Math.random() * 27) + 'px';
-        });
-      }, 50);
-      
-      setTimeout(() => {
-        clearInterval(interval);
-        bars.forEach(bar => bar.style.height = '5px');
-        document.getElementById('voice-status').textContent = 'Idle';
-        document.getElementById('voice-status').style.color = '#666';
-      }, duration);
-    }
-    
-    // Speak command
-    async function speak(text, emotion = 'neutral') {
-      logVoice(`"${text}"`);
-      animateVoice(text.split(' ').length * 200);
-      
       try {
-        const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
+        await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, emotion })
         });
-        
-        if (!resp.ok) {
-          logError('Voice failed: ' + resp.status);
-        }
       } catch (e) {
         logError('Voice error: ' + e.message);
       }
+      
+      setTimeout(() => {
+        document.getElementById('voice-status').textContent = 'Idle';
+        document.getElementById('voice-status').style.color = '#666';
+      }, text.split(' ').length * 200);
     }
     
-    // Commands
     const commands = {
-      help: () => {
-        log(`
-<span style="color:#00ffff">Available Commands:</span>
-  speak &lt;msg&gt;   - Make SID say something
-  gm            - Morning greeting
-  bullish       - Bullish commentary
-  bearish       - Bearish commentary  
-  rug           - Rug warning
-  scan          - Scan for new tokens
-  buy &lt;amt&gt;     - Buy current token
-  sell all      - Sell all positions
-  pnl           - Show profit/loss
-  clear         - Clear terminal
-  status        - Connection status
-        `.trim(), 'system');
-      },
-      
-      gm: () => speak("GM degens! Another day in the trenches. Let's find some alpha.", 'neutral'),
-      bullish: () => speak("Chart's looking spicy. This could have legs. DYOR but I'm watching closely.", 'bullish'),
-      bearish: () => speak("Not gonna lie, this is looking weak. Might be time to take profits if you're up.", 'bearish'),
-      rug: () => speak("Hold up. Something's off here. Dev wallet looking sus. Do NOT ape without checking.", 'skeptical'),
-      
-      scan: () => {
-        logSystem('Scanning for new tokens...');
-        setTimeout(() => log('Scan complete. No high-conviction plays right now.', 'system'), 2000);
-      },
-      
-      pnl: () => {
-        log('Session P&L: <span style="color:#ff3333">-$14.00</span> (-47%)', 'system');
-        log('Starting: 1.20 SOL → Current: 0.489 SOL', 'system');
-      },
-      
-      clear: () => {
-        output.innerHTML = '';
-        logSystem('Terminal cleared');
-      },
-      
+      help: () => log(`Commands: speak, gm, bullish, bearish, rug, scan, buy, sell, clear, status`, 'system'),
+      gm: () => speak("GM degens! Let's find some alpha today.", 'neutral'),
+      bullish: () => speak("Chart's looking spicy. This could pump.", 'bullish'),
+      bearish: () => speak("Looking weak. Consider taking profits.", 'bearish'),
+      rug: () => speak("Rug alert! Dev wallet looking sus. Be careful.", 'skeptical'),
+      scan: () => { logSystem('Scanning...'); setTimeout(() => log('No plays found.', 'system'), 2000); },
+      clear: () => { output.innerHTML = ''; logSystem('Cleared'); },
       status: async () => {
         try {
           const resp = await fetch(`${SID_URL}/status`);
           const data = await resp.json();
-          log(`Status: ${data.isLive ? '<span style="color:#00ff41">LIVE</span>' : 'OFFLINE'}`, 'system');
-          log(`Token: $${data.token?.symbol} @ $${(data.token?.mcap/1000).toFixed(0)}k`, 'system');
-        } catch (e) {
-          logError('Status check failed');
-        }
+          log(`Status: ${data.isLive ? 'LIVE' : 'OFFLINE'} | $${data.token?.symbol} @ $${(data.token?.mcap/1000).toFixed(0)}k`, 'system');
+        } catch { logError('Status failed'); }
       },
-      
-      buy: (amt) => {
-        const amount = parseFloat(amt) || 0.1;
-        log(`<span style="color:#00ff41">BUY</span> ${amount} SOL → $PHIL`, 'buy');
-        logSystem('Order submitted...');
-      },
-      
-      sell: (what) => {
-        log(`<span style="color:#ff3333">SELL</span> ${what || 'all'} positions`, 'sell');
-        logSystem('Sell order submitted...');
-      }
+      buy: (amt) => log(`<span style="color:#00ff41">BUY</span> ${amt || 0.1} SOL`, 'buy'),
+      sell: () => log(`<span style="color:#ff3333">SELL</span> all`, 'sell')
     };
     
-    function cmd(text) {
-      input.value = text;
-      handleCommand(text);
-    }
+    function cmd(text) { input.value = text; handleCommand(text); }
     
     function handleCommand(text) {
-      const parts = text.trim().split(' ');
-      const command = parts[0].toLowerCase();
-      const args = parts.slice(1).join(' ');
-      
+      const [command, ...args] = text.trim().split(' ');
       log(`<span style="color:#666">$</span> ${text}`, '');
       
-      if (command === 'speak' && args) {
-        speak(args);
-      } else if (commands[command]) {
-        commands[command](args);
-      } else if (text.trim()) {
-        // Treat as speak command
-        speak(text);
-      }
+      if (command === 'speak' && args.length) speak(args.join(' '));
+      else if (commands[command]) commands[command](args.join(' '));
+      else if (text.trim()) speak(text);
     }
     
-    // Input handler
     input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const text = input.value.trim();
-        if (text) {
-          handleCommand(text);
-          input.value = '';
-        }
+      if (e.key === 'Enter' && input.value.trim()) {
+        handleCommand(input.value);
+        input.value = '';
       }
     });
     
-    // SSE Connection
-    let audioPlayer = null;
-    
-    function playAudio(url) {
-      if (audioPlayer) {
-        audioPlayer.pause();
-      }
-      audioPlayer = new Audio(url);
-      audioPlayer.play().catch(e => logError('Audio play failed: ' + e.message));
-    }
-    
+    // SSE
     function connectSSE() {
-      logSystem('Connecting to SID backend...');
-      
+      logSystem('Connecting...');
       eventSource = new EventSource(`${SID_URL}/events`);
       
       eventSource.onopen = () => {
@@ -612,77 +650,50 @@
       eventSource.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
-          
-          if (data.type === 'speak') {
-            logSid(data.text);
-            animateVoice(data.text.split(' ').length * 200);
-          }
-          
-          if (data.type === 'audio' && data.path) {
-            logVoice('Playing audio...');
-            playAudio(`${SID_URL}${data.path}`);
-          }
-          
-          if (data.type === 'trade') {
-            const type = data.tradeType === 'buy' ? 'buy' : 'sell';
-            log(`${data.tradeType.toUpperCase()} ${data.amount} SOL`, type);
-          }
+          if (data.type === 'speak') logSid(data.text);
+          if (data.type === 'audio' && data.path) playAudio(`${SID_URL}${data.path}`);
         } catch {}
       };
       
       eventSource.onerror = () => {
         document.getElementById('connection').innerHTML = '<span style="color:#ff3333">●</span> Disconnected';
-        logError('Connection lost. Reconnecting...');
         setTimeout(connectSSE, 5000);
       };
     }
     
-    // Fetch token data
+    // Token data
     async function fetchToken() {
       try {
         const resp = await fetch('https://api.dexscreener.com/tokens/v1/solana/DapsZMWnySYgexnmF75yq4XKaH8RBF2YeWtRvtD8pump');
         const data = await resp.json();
-        
         if (data[0]) {
           const p = data[0];
           const mcap = (p.marketCap / 1000).toFixed(0);
-          const change5m = p.priceChange?.m5 || 0;
-          const change1h = p.priceChange?.h1 || 0;
-          const vol = (p.volume?.h24 / 1000).toFixed(0);
-          const buys = p.txns?.m5?.buys || 0;
-          const sells = p.txns?.m5?.sells || 0;
-          const buyRatio = buys / (buys + sells) * 100;
+          const c5 = p.priceChange?.m5 || 0;
+          const c1 = p.priceChange?.h1 || 0;
           
           document.getElementById('mcap').textContent = `$${mcap}k`;
           document.getElementById('t-mcap').textContent = `$${mcap}k`;
           
-          const c5 = document.getElementById('change5m');
-          c5.textContent = `${change5m >= 0 ? '+' : ''}${change5m.toFixed(1)}%`;
-          c5.className = `stat-value ${change5m >= 0 ? 'positive' : 'negative'}`;
+          const el5 = document.getElementById('change5m');
+          el5.textContent = `${c5 >= 0 ? '+' : ''}${c5.toFixed(1)}%`;
+          el5.className = `stat-value ${c5 >= 0 ? 'positive' : 'negative'}`;
           
-          const t5 = document.getElementById('t-5m');
-          t5.textContent = `${change5m >= 0 ? '+' : ''}${change5m.toFixed(1)}%`;
-          t5.className = `token-value ${change5m >= 0 ? '' : 'negative'}`;
-          
-          const t1 = document.getElementById('t-1h');
-          t1.textContent = `${change1h >= 0 ? '+' : ''}${change1h.toFixed(1)}%`;
-          t1.className = `token-value ${change1h >= 0 ? '' : 'negative'}`;
-          
-          document.getElementById('t-vol').textContent = `$${vol}k`;
-          document.getElementById('t-buys').textContent = `${buyRatio.toFixed(0)}%`;
+          document.getElementById('t-5m').textContent = `${c5 >= 0 ? '+' : ''}${c5.toFixed(1)}%`;
+          document.getElementById('t-1h').textContent = `${c1 >= 0 ? '+' : ''}${c1.toFixed(1)}%`;
+          document.getElementById('t-vol').textContent = `$${(p.volume?.h24/1000).toFixed(0)}k`;
         }
       } catch {}
     }
     
-    // Time
     function updateTime() {
       document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
     }
     
     // Init
-    logSystem('SID Terminal v1.0');
+    initLobster();
+    logSystem('🦞 SID Terminal v1.0');
     logSystem('Type "help" for commands');
-    log('');
     
     connectSSE();
     fetchToken();
@@ -691,8 +702,14 @@
     setInterval(fetchToken, 10000);
     setInterval(updateTime, 1000);
     
-    // Focus input on click
     document.addEventListener('click', () => input.focus());
+    
+    window.addEventListener('resize', () => {
+      const container = document.getElementById('lobster-container');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
   </script>
 </body>
 </html>
