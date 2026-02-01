@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SID - The Lobster</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 50%, #0a0a0a 100%);
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+    #canvas { display: block; }
+    
+    #ui {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+    
+    button {
+      background: #ff4444;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    button:hover { background: #ff6666; transform: scale(1.05); }
+    
+    #speech-box {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      border: 2px solid #ff4444;
+      border-radius: 10px;
+      padding: 15px 25px;
+      color: #fff;
+      font-size: 18px;
+      max-width: 600px;
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #speech-box.visible { opacity: 1; }
+    
+    #mood-indicator {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  
+  <div id="speech-box"></div>
+  <div id="mood-indicator">🦞 Idle</div>
+  
+  <div id="ui">
+    <button onclick="setMood('idle')">😐 Idle</button>
+    <button onclick="setMood('happy')">😊 Happy</button>
+    <button onclick="setMood('angry')">😠 Angry</button>
+    <button onclick="setMood('excited')">🤩 Excited</button>
+    <button onclick="speak('Hey degens! SID here. Ready to cook?')">🗣️ Speak</button>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  
+  <script type="module">
+    import * as THREE from 'three';
+    
+    // ============ SETUP ============
+    const canvas = document.getElementById('canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
+    
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+    
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+    keyLight.position.set(2, 3, 4);
+    scene.add(keyLight);
+    
+    const fillLight = new THREE.DirectionalLight(0xff4444, 0.3);
+    fillLight.position.set(-2, 0, 2);
+    scene.add(fillLight);
+    
+    const rimLight = new THREE.DirectionalLight(0xff8844, 0.5);
+    rimLight.position.set(0, -2, -3);
+    scene.add(rimLight);
+    
+    // ============ LOBSTER HEAD ============
+    const lobsterGroup = new THREE.Group();
+    scene.add(lobsterGroup);
+    
+    // Materials
+    const shellMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0xcc2200,
+      roughness: 0.4,
+      metalness: 0.1,
+    });
+    
+    const darkShellMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x881100,
+      roughness: 0.5,
+      metalness: 0.1,
+    });
+    
+    const eyeMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x000000,
+      roughness: 0.1,
+      metalness: 0.8,
+    });
+    
+    const eyeWhiteMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0xffffcc,
+      emissive: 0x444422,
+      roughness: 0.3,
+    });
+    
+    // Head (main shell) - elongated sphere
+    const headGeom = new THREE.SphereGeometry(1, 32, 32);
+    headGeom.scale(1, 0.8, 1.1);
+    const head = new THREE.Mesh(headGeom, shellMaterial);
+    lobsterGroup.add(head);
+    
+    // Head ridge/crest
+    const ridgeGeom = new THREE.BoxGeometry(0.15, 0.3, 1.2);
+    const ridge = new THREE.Mesh(ridgeGeom, darkShellMaterial);
+    ridge.position.set(0, 0.7, 0.1);
+    lobsterGroup.add(ridge);
+    
+    // Small spikes on ridge
+    for (let i = 0; i < 5; i++) {
+      const spikeGeom = new THREE.ConeGeometry(0.05, 0.15, 8);
+      const spike = new THREE.Mesh(spikeGeom, darkShellMaterial);
+      spike.position.set(0, 0.85, -0.4 + i * 0.2);
+      lobsterGroup.add(spike);
+    }
+    
+    // Eye stalks
+    const eyeStalkGeom = new THREE.CylinderGeometry(0.08, 0.1, 0.4, 16);
+    
+    const leftEyeStalk = new THREE.Mesh(eyeStalkGeom, shellMaterial);
+    leftEyeStalk.position.set(-0.35, 0.5, 0.7);
+    leftEyeStalk.rotation.x = -0.5;
+    leftEyeStalk.rotation.z = -0.3;
+    lobsterGroup.add(leftEyeStalk);
+    
+    const rightEyeStalk = new THREE.Mesh(eyeStalkGeom, shellMaterial);
+    rightEyeStalk.position.set(0.35, 0.5, 0.7);
+    rightEyeStalk.rotation.x = -0.5;
+    rightEyeStalk.rotation.z = 0.3;
+    lobsterGroup.add(rightEyeStalk);
+    
+    // Eye balls
+    const eyeBallGeom = new THREE.SphereGeometry(0.12, 16, 16);
+    
+    const leftEyeWhite = new THREE.Mesh(eyeBallGeom, eyeWhiteMaterial);
+    leftEyeWhite.position.set(-0.45, 0.7, 0.9);
+    lobsterGroup.add(leftEyeWhite);
+    
+    const rightEyeWhite = new THREE.Mesh(eyeBallGeom, eyeWhiteMaterial);
+    rightEyeWhite.position.set(0.45, 0.7, 0.9);
+    lobsterGroup.add(rightEyeWhite);
+    
+    // Pupils
+    const pupilGeom = new THREE.SphereGeometry(0.06, 16, 16);
+    
+    const leftPupil = new THREE.Mesh(pupilGeom, eyeMaterial);
+    leftPupil.position.set(-0.45, 0.7, 1.02);
+    lobsterGroup.add(leftPupil);
+    
+    const rightPupil = new THREE.Mesh(pupilGeom, eyeMaterial);
+    rightPupil.position.set(0.45, 0.7, 1.02);
+    lobsterGroup.add(rightPupil);
+    
+    // Antennae
+    const antennaeMaterial = new THREE.MeshStandardMaterial({ color: 0xdd4422 });
+    
+    function createAntenna(xSign) {
+      const group = new THREE.Group();
+      const segments = 8;
+      let prevEnd = new THREE.Vector3(0, 0, 0);
+      
+      for (let i = 0; i < segments; i++) {
+        const len = 0.3 - i * 0.02;
+        const thickness = 0.03 - i * 0.003;
+        const geom = new THREE.CylinderGeometry(thickness, thickness + 0.005, len, 8);
+        const seg = new THREE.Mesh(geom, antennaeMaterial);
+        
+        seg.position.copy(prevEnd);
+        seg.position.y += len / 2;
+        seg.rotation.z = xSign * (0.1 + i * 0.08);
+        seg.rotation.x = -0.1 - i * 0.05;
+        
+        group.add(seg);
+        
+        // Calculate end position for next segment
+        const dir = new THREE.Vector3(0, len, 0);
+        dir.applyEuler(seg.rotation);
+        prevEnd.add(dir);
+      }
+      
+      return group;
+    }
+    
+    const leftAntenna = createAntenna(-1);
+    leftAntenna.position.set(-0.3, 0.6, 0.8);
+    lobsterGroup.add(leftAntenna);
+    
+    const rightAntenna = createAntenna(1);
+    rightAntenna.position.set(0.3, 0.6, 0.8);
+    lobsterGroup.add(rightAntenna);
+    
+    // Mouth / Mandibles
+    const mandibleGeom = new THREE.BoxGeometry(0.15, 0.08, 0.3);
+    
+    const leftMandible = new THREE.Mesh(mandibleGeom, darkShellMaterial);
+    leftMandible.position.set(-0.2, -0.1, 0.9);
+    lobsterGroup.add(leftMandible);
+    
+    const rightMandible = new THREE.Mesh(mandibleGeom, darkShellMaterial);
+    rightMandible.position.set(0.2, -0.1, 0.9);
+    lobsterGroup.add(rightMandible);
+    
+    // Lower jaw
+    const jawGeom = new THREE.BoxGeometry(0.5, 0.1, 0.25);
+    const jaw = new THREE.Mesh(jawGeom, darkShellMaterial);
+    jaw.position.set(0, -0.3, 0.85);
+    lobsterGroup.add(jaw);
+    
+    // Small feelers near mouth
+    for (let i = 0; i < 4; i++) {
+      const feelerGeom = new THREE.CylinderGeometry(0.015, 0.02, 0.25, 8);
+      const feeler = new THREE.Mesh(feelerGeom, antennaeMaterial);
+      const angle = (i - 1.5) * 0.3;
+      feeler.position.set(Math.sin(angle) * 0.3, -0.2, 0.95);
+      feeler.rotation.x = -0.5;
+      feeler.rotation.z = angle;
+      lobsterGroup.add(feeler);
+    }
+    
+    // ============ ANIMATION STATE ============
+    let currentMood = 'idle';
+    let isSpeaking = false;
+    let speakingTime = 0;
+    let blinkTimer = 0;
+    let isBlinking = false;
+    
+    const moodColors = {
+      idle: 0xcc2200,
+      happy: 0xff4422,
+      angry: 0x880000,
+      excited: 0xff6600,
+    };
+    
+    const moodIndicators = {
+      idle: '🦞 Idle',
+      happy: '😊 Happy',
+      angry: '😠 Angry',
+      excited: '🤩 Excited',
+    };
+    
+    // ============ MOOD & SPEECH FUNCTIONS ============
+    window.setMood = function(mood) {
+      currentMood = mood;
+      document.getElementById('mood-indicator').textContent = moodIndicators[mood];
+      
+      // Change shell color
+      const targetColor = new THREE.Color(moodColors[mood]);
+      shellMaterial.color.copy(targetColor);
+      darkShellMaterial.color.copy(targetColor.clone().multiplyScalar(0.6));
+    };
+    
+    window.speak = function(text) {
+      const box = document.getElementById('speech-box');
+      box.textContent = text;
+      box.classList.add('visible');
+      
+      isSpeaking = true;
+      speakingTime = 0;
+      
+      // Hide after text length * 50ms + 1s
+      setTimeout(() => {
+        box.classList.remove('visible');
+        isSpeaking = false;
+      }, text.length * 50 + 1000);
+    };
+    
+    // ============ MOUSE TRACKING ============
+    const mouse = new THREE.Vector2();
+    
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    });
+    
+    // ============ ANIMATION LOOP ============
+    const clock = new THREE.Clock();
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+      
+      // Head subtle movement
+      lobsterGroup.rotation.y = Math.sin(time * 0.5) * 0.1;
+      lobsterGroup.rotation.x = Math.sin(time * 0.3) * 0.05;
+      
+      // Eye tracking (follow mouse)
+      const targetX = mouse.x * 0.05;
+      const targetY = mouse.y * 0.03;
+      
+      leftPupil.position.x = -0.45 + targetX;
+      leftPupil.position.y = 0.7 + targetY;
+      rightPupil.position.x = 0.45 + targetX;
+      rightPupil.position.y = 0.7 + targetY;
+      
+      // Blinking
+      blinkTimer += delta;
+      if (!isBlinking && blinkTimer > 3 + Math.random() * 2) {
+        isBlinking = true;
+        blinkTimer = 0;
+      }
+      
+      if (isBlinking) {
+        const blinkPhase = blinkTimer * 10;
+        const blinkScale = blinkPhase < 1 ? 1 - blinkPhase : (blinkPhase < 2 ? blinkPhase - 1 : 1);
+        leftEyeWhite.scale.y = blinkScale;
+        rightEyeWhite.scale.y = blinkScale;
+        leftPupil.scale.y = blinkScale;
+        rightPupil.scale.y = blinkScale;
+        
+        if (blinkPhase > 2) {
+          isBlinking = false;
+        }
+      }
+      
+      // Antenna sway
+      leftAntenna.rotation.z = -0.2 + Math.sin(time * 1.5) * 0.1;
+      leftAntenna.rotation.x = Math.sin(time * 1.2) * 0.1;
+      rightAntenna.rotation.z = 0.2 + Math.sin(time * 1.5 + 0.5) * 0.1;
+      rightAntenna.rotation.x = Math.sin(time * 1.2 + 0.5) * 0.1;
+      
+      // Mandible movement when speaking
+      if (isSpeaking) {
+        speakingTime += delta;
+        const mouthOpen = Math.sin(speakingTime * 20) * 0.5 + 0.5;
+        
+        leftMandible.rotation.z = -mouthOpen * 0.3;
+        rightMandible.rotation.z = mouthOpen * 0.3;
+        jaw.position.y = -0.3 - mouthOpen * 0.1;
+      } else {
+        leftMandible.rotation.z *= 0.9;
+        rightMandible.rotation.z *= 0.9;
+        jaw.position.y += (-0.3 - jaw.position.y) * 0.1;
+      }
+      
+      // Mood-based animations
+      if (currentMood === 'excited') {
+        lobsterGroup.position.y = Math.sin(time * 8) * 0.05;
+        lobsterGroup.rotation.z = Math.sin(time * 6) * 0.05;
+      } else if (currentMood === 'angry') {
+        lobsterGroup.rotation.x = -0.1 + Math.sin(time * 10) * 0.02;
+        // Eyes glow red when angry
+        eyeWhiteMaterial.emissive.setHex(0x440000);
+      } else if (currentMood === 'happy') {
+        lobsterGroup.rotation.z = Math.sin(time * 2) * 0.1;
+        eyeWhiteMaterial.emissive.setHex(0x444422);
+      } else {
+        lobsterGroup.position.y *= 0.95;
+        eyeWhiteMaterial.emissive.setHex(0x444422);
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+    
+    // Handle resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
