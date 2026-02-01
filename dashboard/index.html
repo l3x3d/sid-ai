@@ -11,9 +11,7 @@
     
     :root {
       --green: #00ff41;
-      --dim-green: #00aa2a;
       --red: #ff3333;
-      --yellow: #ffff00;
       --cyan: #00ffff;
       --purple: #bf5fff;
       --bg: #0a0a0a;
@@ -25,7 +23,6 @@
       color: var(--green);
       font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 14px;
-      line-height: 1.4;
       min-height: 100vh;
       overflow: hidden;
     }
@@ -39,12 +36,6 @@
       background: #333;
     }
     
-    .panel {
-      background: var(--bg);
-      padding: 10px;
-      overflow: hidden;
-    }
-    
     .header {
       grid-column: 1 / -1;
       display: flex;
@@ -55,39 +46,17 @@
       border-bottom: 1px solid #333;
     }
     
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .logo-text {
-      font-size: 20px;
-      font-weight: bold;
-    }
-    
-    .status-badge {
-      background: var(--purple);
-      color: #fff;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-weight: bold;
-    }
-    
-    .header-stats {
-      display: flex;
-      gap: 25px;
-      font-size: 13px;
-      color: #666;
-    }
-    
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-text { font-size: 20px; font-weight: bold; }
+    .status-badge { background: var(--purple); color: #fff; padding: 2px 8px; font-size: 11px; font-weight: bold; }
+    .header-stats { display: flex; gap: 25px; font-size: 13px; color: #666; }
     .stat-value { color: var(--cyan); }
     
     .terminal {
       grid-column: 1;
       display: flex;
       flex-direction: column;
-      height: 100%;
+      background: var(--bg);
     }
     
     .terminal-header {
@@ -105,27 +74,15 @@
       font-size: 13px;
     }
     
-    .terminal-line {
-      margin-bottom: 4px;
-      word-wrap: break-word;
-    }
-    
+    .terminal-line { margin-bottom: 4px; }
     .terminal-line.system { color: #666; }
     .terminal-line.sid { color: var(--cyan); }
     .terminal-line.code { color: var(--purple); }
     .terminal-line.success { color: var(--green); }
     .terminal-line.error { color: var(--red); }
     .terminal-line.voice { color: #ff00ff; }
-    
-    .timestamp {
-      color: #444;
-      margin-right: 8px;
-    }
-    
-    .prefix {
-      font-weight: bold;
-      margin-right: 5px;
-    }
+    .timestamp { color: #444; margin-right: 8px; }
+    .prefix { font-weight: bold; margin-right: 5px; }
     
     .terminal-input-wrap {
       display: flex;
@@ -135,11 +92,7 @@
       border-top: 1px solid #333;
     }
     
-    .prompt {
-      color: var(--green);
-      margin-right: 8px;
-      font-weight: bold;
-    }
+    .prompt { color: var(--green); margin-right: 8px; font-weight: bold; }
     
     .terminal-input {
       flex: 1;
@@ -149,7 +102,6 @@
       font-family: inherit;
       font-size: 14px;
       outline: none;
-      caret-color: var(--green);
     }
     
     .sidebar {
@@ -159,10 +111,7 @@
       background: #333;
     }
     
-    .sidebar-section {
-      background: var(--bg);
-      padding: 12px;
-    }
+    .sidebar-section { background: var(--bg); padding: 12px; }
     
     .section-title {
       color: #666;
@@ -174,22 +123,19 @@
       padding-bottom: 5px;
     }
     
-    #lobster-container {
-      width: 100%;
-      height: 180px;
-      position: relative;
-    }
+    #lobster-container { width: 100%; height: 220px; }
+    #lobster-canvas { width: 100%; height: 100%; cursor: grab; }
+    #lobster-canvas:active { cursor: grabbing; }
     
-    #lobster-canvas {
-      width: 100%;
-      height: 100%;
+    .mood-indicator {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
     }
+    .mood-indicator .mood { color: var(--purple); }
     
-    .commands {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
+    .commands { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     
     .cmd-btn {
       background: #1a1a1a;
@@ -199,37 +145,12 @@
       font-family: inherit;
       font-size: 12px;
       cursor: pointer;
-      text-align: left;
       transition: all 0.1s;
     }
     
-    .cmd-btn:hover {
-      background: #222;
-      border-color: var(--green);
-    }
-    
+    .cmd-btn:hover { background: #222; border-color: var(--green); }
     .cmd-btn.purple { color: var(--purple); }
     .cmd-btn.purple:hover { border-color: var(--purple); }
-    
-    .project-list {
-      font-size: 12px;
-    }
-    
-    .project-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid #1a1a1a;
-    }
-    
-    .project-name { color: var(--cyan); }
-    .project-status { color: #666; }
-    .project-status.active { color: var(--green); }
-    
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #333; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--green); }
     
     .footer {
       grid-column: 1 / -1;
@@ -242,14 +163,12 @@
       color: #444;
     }
     
-    .footer a {
-      color: #666;
-      text-decoration: none;
-    }
+    .footer a { color: #666; text-decoration: none; }
+    .footer a:hover { color: var(--green); }
     
-    .footer a:hover {
-      color: var(--green);
-    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #333; }
     
     @media (max-width: 900px) {
       .container { grid-template-columns: 1fr; }
@@ -270,16 +189,9 @@
       </div>
     </div>
     
-    <div class="terminal panel">
-      <div class="terminal-header">
-        sid@dev:~/workspace$ <span id="mode">ready to build</span>
-      </div>
-      <div class="terminal-output" id="output">
-        <div class="terminal-line system">
-          <span class="timestamp">[--:--:--]</span>
-          <span>Initializing SID Builder v1.0...</span>
-        </div>
-      </div>
+    <div class="terminal">
+      <div class="terminal-header">sid@dev:~/workspace$ <span id="mode">ready to build</span></div>
+      <div class="terminal-output" id="output"></div>
       <div class="terminal-input-wrap">
         <span class="prompt">sid&gt;</span>
         <input type="text" class="terminal-input" id="input" placeholder="gm | build | ship | debug | help" autofocus>
@@ -292,25 +204,7 @@
         <div id="lobster-container">
           <canvas id="lobster-canvas"></canvas>
         </div>
-        <div id="voice-status" style="color:#666;font-size:12px;text-align:center;margin-top:5px">Ready to build</div>
-      </div>
-      
-      <div class="sidebar-section">
-        <div class="section-title">📁 Projects</div>
-        <div class="project-list">
-          <div class="project-item">
-            <span class="project-name">sid-ai</span>
-            <span class="project-status active">● active</span>
-          </div>
-          <div class="project-item">
-            <span class="project-name">pumpfun-sniper</span>
-            <span class="project-status">idle</span>
-          </div>
-          <div class="project-item">
-            <span class="project-name">openclaw</span>
-            <span class="project-status">idle</span>
-          </div>
-        </div>
+        <div class="mood-indicator">Mood: <span class="mood" id="mood">Chill</span></div>
       </div>
       
       <div class="sidebar-section">
@@ -321,26 +215,31 @@
           <button class="cmd-btn purple" onclick="cmd('ship')">ship it</button>
           <button class="cmd-btn" onclick="cmd('debug')">debug</button>
           <button class="cmd-btn" onclick="cmd('idea')">idea</button>
-          <button class="cmd-btn" onclick="cmd('review')">review</button>
+          <button class="cmd-btn" onclick="cmd('hype')">hype</button>
         </div>
       </div>
     </div>
     
     <div class="footer">
       <span>SID v1.0 • Builder Bot</span>
-      <span>
-        <span id="connection">● Connected</span> • 
-        <a href="/avatar" target="_blank">OBS</a>
-      </span>
+      <span><span id="connection">● Connected</span> • <a href="/avatar" target="_blank">OBS</a></span>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   
   <script>
-    // ============ 3D LOBSTER ============
+    // ============ DYNAMIC 3D LOBSTER ============
     let scene, camera, renderer, lobster;
-    let isSpinningFast = false;
+    let leftClaw, rightClaw, leftEye, rightEye, tailSegments = [];
+    let mouseX = 0, mouseY = 0;
+    let targetRotY = 0, targetRotX = 0;
+    let isDragging = false, prevMouseX = 0;
+    let mood = 'chill'; // chill, excited, thinking, speaking
+    let blinkTimer = 0;
+    let breathePhase = 0;
+    let clawSnapTimer = 0;
+    let wigglePhase = 0;
     
     function initLobster() {
       const container = document.getElementById('lobster-container');
@@ -352,114 +251,328 @@
       
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
       renderer.setSize(container.clientWidth, container.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       
-      const ambient = new THREE.AmbientLight(0x404040, 2);
-      scene.add(ambient);
+      // Lighting
+      scene.add(new THREE.AmbientLight(0x404040, 2));
       
-      const light1 = new THREE.PointLight(0xbf5fff, 2, 100);
-      light1.position.set(5, 5, 5);
-      scene.add(light1);
+      const keyLight = new THREE.PointLight(0xbf5fff, 2, 100);
+      keyLight.position.set(5, 5, 5);
+      scene.add(keyLight);
       
-      const light2 = new THREE.PointLight(0x00ff41, 1, 100);
-      light2.position.set(-5, -5, 5);
-      scene.add(light2);
+      const fillLight = new THREE.PointLight(0x00ff41, 1, 100);
+      fillLight.position.set(-5, -3, 3);
+      scene.add(fillLight);
       
+      const rimLight = new THREE.PointLight(0x00ffff, 0.5, 100);
+      rimLight.position.set(0, 0, -5);
+      scene.add(rimLight);
+      
+      buildLobster();
+      setupInteraction(canvas);
+      animate();
+    }
+    
+    function buildLobster() {
       lobster = new THREE.Group();
       
-      const bodyMat = new THREE.MeshPhongMaterial({ color: 0xbf5fff, shininess: 100, specular: 0x444444 });
-      const clawMat = new THREE.MeshPhongMaterial({ color: 0x9f3fff, shininess: 80 });
+      const bodyMat = new THREE.MeshPhongMaterial({ 
+        color: 0xbf5fff, 
+        shininess: 100, 
+        specular: 0x666666,
+        emissive: 0x1a0033,
+        emissiveIntensity: 0.1
+      });
       
-      // Body
-      const bodyGeo = new THREE.CapsuleGeometry(0.4, 1.2, 8, 16);
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.rotation.z = Math.PI / 2;
-      lobster.add(body);
+      const clawMat = new THREE.MeshPhongMaterial({ 
+        color: 0x9f3fff, 
+        shininess: 80,
+        emissive: 0x1a0033,
+        emissiveIntensity: 0.1
+      });
+      
+      // Body with segments
+      const bodyGroup = new THREE.Group();
+      for (let i = 0; i < 3; i++) {
+        const segGeo = new THREE.SphereGeometry(0.38 - i * 0.02, 16, 12);
+        const seg = new THREE.Mesh(segGeo, bodyMat);
+        seg.position.x = -i * 0.25;
+        seg.scale.set(1.3, 0.9, 0.85);
+        bodyGroup.add(seg);
+      }
+      lobster.add(bodyGroup);
       
       // Head
-      const headGeo = new THREE.SphereGeometry(0.35, 16, 16);
+      const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
       const head = new THREE.Mesh(headGeo, bodyMat);
-      head.position.x = 0.9;
-      head.scale.set(1.2, 0.9, 0.8);
+      head.position.x = 0.7;
+      head.scale.set(1.1, 0.85, 0.75);
       lobster.add(head);
       
-      // Eyes (green)
-      const eyeGeo = new THREE.SphereGeometry(0.08, 8, 8);
+      // Eye stalks and eyes
+      const eyeGroup = new THREE.Group();
+      const eyeStalkGeo = new THREE.CylinderGeometry(0.04, 0.05, 0.25, 8);
+      const eyeGeo = new THREE.SphereGeometry(0.1, 12, 12);
       const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ff41 });
+      const pupilGeo = new THREE.SphereGeometry(0.05, 8, 8);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
       
-      [-1, 1].forEach(side => {
+      [-1, 1].forEach((side, i) => {
+        const stalk = new THREE.Mesh(eyeStalkGeo, bodyMat);
+        stalk.position.set(0.85, 0.2, side * 0.2);
+        stalk.rotation.z = -0.4;
+        stalk.rotation.x = side * 0.2;
+        eyeGroup.add(stalk);
+        
+        const eyeBall = new THREE.Group();
         const eye = new THREE.Mesh(eyeGeo, eyeMat);
-        eye.position.set(1.1, 0.35, side * 0.15);
-        lobster.add(eye);
+        const pupil = new THREE.Mesh(pupilGeo, pupilMat);
+        pupil.position.z = 0.07;
+        eyeBall.add(eye);
+        eyeBall.add(pupil);
+        eyeBall.position.set(0.95, 0.38, side * 0.25);
+        eyeGroup.add(eyeBall);
+        
+        if (i === 0) leftEye = eyeBall;
+        else rightEye = eyeBall;
       });
+      lobster.add(eyeGroup);
       
-      // Claws
-      [-1, 1].forEach(side => {
+      // Animated Claws
+      [-1, 1].forEach((side, i) => {
         const clawGroup = new THREE.Group();
-        const armGeo = new THREE.CapsuleGeometry(0.1, 0.6, 4, 8);
-        const arm = new THREE.Mesh(armGeo, clawMat);
-        arm.rotation.z = Math.PI / 2 + side * 0.3;
-        arm.position.x = 0.3;
-        clawGroup.add(arm);
         
-        const pincerGeo = new THREE.ConeGeometry(0.15, 0.4, 8);
-        const pincer1 = new THREE.Mesh(pincerGeo, clawMat);
-        pincer1.position.set(0.7, 0.05, 0);
-        pincer1.rotation.z = -Math.PI / 2 + 0.2;
-        clawGroup.add(pincer1);
+        // Arm segments
+        const upperArm = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.4, 4, 8), clawMat);
+        upperArm.rotation.z = Math.PI / 2 + side * 0.4;
+        upperArm.position.x = 0.2;
+        clawGroup.add(upperArm);
         
-        const pincer2 = new THREE.Mesh(pincerGeo, clawMat);
-        pincer2.position.set(0.7, -0.05, 0);
-        pincer2.rotation.z = -Math.PI / 2 - 0.2;
-        clawGroup.add(pincer2);
+        const forearm = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.35, 4, 8), clawMat);
+        forearm.position.set(0.55, side * 0.1, 0);
+        forearm.rotation.z = side * 0.3;
+        clawGroup.add(forearm);
         
-        clawGroup.position.set(0.5, 0, side * 0.5);
-        clawGroup.rotation.y = side * 0.5;
+        // Pincer (will animate)
+        const pincerGroup = new THREE.Group();
+        
+        const topPincer = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 8), clawMat);
+        topPincer.rotation.z = -Math.PI / 2;
+        topPincer.position.set(0.15, 0.08, 0);
+        topPincer.name = 'topPincer';
+        pincerGroup.add(topPincer);
+        
+        const bottomPincer = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), clawMat);
+        bottomPincer.rotation.z = -Math.PI / 2;
+        bottomPincer.position.set(0.12, -0.06, 0);
+        bottomPincer.name = 'bottomPincer';
+        pincerGroup.add(bottomPincer);
+        
+        pincerGroup.position.set(0.75, side * 0.05, 0);
+        clawGroup.add(pincerGroup);
+        
+        clawGroup.position.set(0.3, 0, side * 0.45);
+        clawGroup.rotation.y = side * 0.6;
         lobster.add(clawGroup);
+        
+        if (i === 0) leftClaw = clawGroup;
+        else rightClaw = clawGroup;
       });
       
-      // Tail
-      for (let i = 0; i < 5; i++) {
-        const segGeo = new THREE.CylinderGeometry(0.3 - i * 0.04, 0.35 - i * 0.04, 0.2, 8);
+      // Tail segments (animated)
+      tailSegments = [];
+      for (let i = 0; i < 6; i++) {
+        const size = 0.32 - i * 0.035;
+        const segGeo = new THREE.CylinderGeometry(size * 0.9, size, 0.18, 8);
         const seg = new THREE.Mesh(segGeo, bodyMat);
         seg.rotation.z = Math.PI / 2;
-        seg.position.x = -0.8 - i * 0.22;
+        seg.position.x = -0.7 - i * 0.2;
         lobster.add(seg);
+        tailSegments.push(seg);
       }
       
-      const fanGeo = new THREE.CircleGeometry(0.3, 8, 0, Math.PI);
-      const fan = new THREE.Mesh(fanGeo, bodyMat);
-      fan.position.x = -2.0;
-      fan.rotation.y = Math.PI / 2;
-      fan.rotation.x = Math.PI / 2;
-      lobster.add(fan);
+      // Tail fan
+      const fanGroup = new THREE.Group();
+      [-1, 0, 1].forEach(angle => {
+        const fanGeo = new THREE.CircleGeometry(0.2, 8, 0, Math.PI * 0.8);
+        const fan = new THREE.Mesh(fanGeo, bodyMat);
+        fan.rotation.y = Math.PI / 2;
+        fan.rotation.z = angle * 0.4;
+        fanGroup.add(fan);
+      });
+      fanGroup.position.x = -1.95;
+      lobster.add(fanGroup);
       
-      // Antennae
-      const antennaGeo = new THREE.CylinderGeometry(0.01, 0.01, 1.5, 4);
+      // Legs (8 total, animated)
+      for (let i = 0; i < 4; i++) {
+        [-1, 1].forEach(side => {
+          const legGroup = new THREE.Group();
+          
+          const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.3, 4), bodyMat);
+          upperLeg.rotation.z = side * 0.8;
+          upperLeg.position.y = -0.15;
+          legGroup.add(upperLeg);
+          
+          const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.015, 0.25, 4), bodyMat);
+          lowerLeg.position.set(side * 0.15, -0.35, 0);
+          lowerLeg.rotation.z = side * 0.3;
+          legGroup.add(lowerLeg);
+          
+          legGroup.position.set(-0.2 + i * 0.22, -0.1, side * 0.32);
+          lobster.add(legGroup);
+        });
+      }
+      
+      // Antennae (long, animated)
       [-1, 1].forEach(side => {
-        const antenna = new THREE.Mesh(antennaGeo, clawMat);
-        antenna.position.set(1.3, 0.1, side * 0.1);
-        antenna.rotation.z = 0.8;
-        antenna.rotation.y = side * 0.3;
-        lobster.add(antenna);
+        const antennaGroup = new THREE.Group();
+        for (let i = 0; i < 8; i++) {
+          const seg = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.015 - i * 0.001, 0.015 - i * 0.0015, 0.2, 4),
+            clawMat
+          );
+          seg.position.y = i * 0.18;
+          seg.rotation.z = 0.1 * i * side;
+          antennaGroup.add(seg);
+        }
+        antennaGroup.position.set(1.0, 0.15, side * 0.15);
+        antennaGroup.rotation.z = 0.6;
+        antennaGroup.rotation.y = side * 0.3;
+        lobster.add(antennaGroup);
       });
       
       scene.add(lobster);
-      animate();
+    }
+    
+    function setupInteraction(canvas) {
+      canvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        prevMouseX = e.clientX;
+      });
+      
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+        mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+        
+        if (isDragging) {
+          targetRotY += (e.clientX - prevMouseX) * 0.01;
+          prevMouseX = e.clientX;
+        }
+      });
+      
+      canvas.addEventListener('mouseup', () => isDragging = false);
+      canvas.addEventListener('mouseleave', () => isDragging = false);
+      
+      canvas.addEventListener('click', () => {
+        clawSnapTimer = 1;
+        setMood('excited');
+      });
+    }
+    
+    function setMood(newMood) {
+      mood = newMood;
+      document.getElementById('mood').textContent = {
+        chill: 'Chill',
+        excited: 'Hyped!',
+        thinking: 'Thinking...',
+        speaking: 'Speaking'
+      }[mood] || 'Chill';
+      
+      if (mood === 'excited') {
+        setTimeout(() => { if (mood === 'excited') mood = 'chill'; }, 3000);
+      }
     }
     
     function animate() {
       requestAnimationFrame(animate);
-      if (lobster) {
-        lobster.rotation.y += isSpinningFast ? 0.05 : 0.01;
-        lobster.position.y = Math.sin(Date.now() * 0.002) * 0.1;
+      
+      const time = Date.now() * 0.001;
+      breathePhase += 0.02;
+      wigglePhase += 0.03;
+      
+      if (!lobster) return;
+      
+      // Base rotation (follows mouse when not dragging)
+      if (!isDragging) {
+        targetRotY += mouseX * 0.002;
+        targetRotX = -mouseY * 0.3;
       }
+      
+      // Smooth rotation
+      lobster.rotation.y += (targetRotY - lobster.rotation.y) * 0.05;
+      lobster.rotation.x += (targetRotX - lobster.rotation.x) * 0.05;
+      
+      // Breathing/bobbing
+      const breatheAmount = mood === 'excited' ? 0.15 : 0.08;
+      const breatheSpeed = mood === 'excited' ? 4 : 2;
+      lobster.position.y = Math.sin(time * breatheSpeed) * breatheAmount;
+      lobster.scale.setScalar(1 + Math.sin(time * breatheSpeed) * 0.02);
+      
+      // Eye tracking (look at cursor)
+      if (leftEye && rightEye) {
+        const lookX = mouseX * 0.15;
+        const lookY = -mouseY * 0.15;
+        leftEye.rotation.y = lookX;
+        leftEye.rotation.x = lookY;
+        rightEye.rotation.y = lookX;
+        rightEye.rotation.x = lookY;
+        
+        // Blinking
+        blinkTimer -= 0.016;
+        if (blinkTimer <= 0) {
+          blinkTimer = 2 + Math.random() * 4;
+          leftEye.scale.y = 0.1;
+          rightEye.scale.y = 0.1;
+          setTimeout(() => {
+            if (leftEye) leftEye.scale.y = 1;
+            if (rightEye) rightEye.scale.y = 1;
+          }, 100);
+        }
+      }
+      
+      // Claw animation
+      if (leftClaw && rightClaw) {
+        const clawWave = Math.sin(time * 2) * 0.1;
+        const excitedBonus = mood === 'excited' ? Math.sin(time * 8) * 0.2 : 0;
+        
+        leftClaw.rotation.x = clawWave + excitedBonus;
+        rightClaw.rotation.x = -clawWave - excitedBonus;
+        leftClaw.rotation.z = Math.sin(time * 1.5) * 0.1;
+        rightClaw.rotation.z = -Math.sin(time * 1.5) * 0.1;
+        
+        // Claw snapping
+        if (clawSnapTimer > 0) {
+          clawSnapTimer -= 0.05;
+          const snap = Math.sin(clawSnapTimer * 20) * 0.3;
+          leftClaw.children.forEach(c => {
+            if (c.children) c.children.forEach(p => {
+              if (p.name === 'topPincer') p.rotation.x = snap;
+              if (p.name === 'bottomPincer') p.rotation.x = -snap;
+            });
+          });
+        }
+      }
+      
+      // Tail wiggle
+      tailSegments.forEach((seg, i) => {
+        const wave = Math.sin(time * 3 + i * 0.5) * 0.05 * (i + 1);
+        const excitedWave = mood === 'excited' ? Math.sin(time * 8 + i) * 0.1 : 0;
+        seg.rotation.y = wave + excitedWave;
+        seg.position.y = Math.sin(time * 2 + i * 0.3) * 0.02;
+      });
+      
+      // Color pulse when speaking
+      if (mood === 'speaking') {
+        const pulse = (Math.sin(time * 10) + 1) / 2;
+        lobster.traverse(obj => {
+          if (obj.material && obj.material.emissiveIntensity !== undefined) {
+            obj.material.emissiveIntensity = 0.1 + pulse * 0.3;
+          }
+        });
+      }
+      
       renderer.render(scene, camera);
-    }
-    
-    function lobsterExcited() {
-      isSpinningFast = true;
-      setTimeout(() => { isSpinningFast = false; }, 3000);
     }
     
     // ============ TERMINAL ============
@@ -469,18 +582,13 @@
     
     const output = document.getElementById('output');
     const input = document.getElementById('input');
-    let eventSource = null;
     let audioPlayer = new Audio();
     let audioUnlocked = false;
     
     function unlockAudio() {
       if (audioUnlocked) return;
-      audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQAAAAAAAAAAQGwfCo+OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+M4xAANCAKsAUAAAP/jOMQBDsgC1hzBgAAAAAA/8QAnf/jOMQBDsgCthzBgAAAAAA=';
-      audioPlayer.play().then(() => {
-        audioPlayer.pause();
-        audioUnlocked = true;
-        logSystem('🔊 Audio enabled');
-      }).catch(() => {});
+      audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYNBqSsAAAAAAD/+1DEAAAHAAGf9AAAIwAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==';
+      audioPlayer.play().then(() => { audioPlayer.pause(); audioUnlocked = true; log('🔊 Audio enabled', 'system'); }).catch(() => {});
     }
     
     document.addEventListener('click', unlockAudio);
@@ -496,69 +604,51 @@
       while (output.children.length > 200) output.removeChild(output.firstChild);
     }
     
-    function logSid(text) { log(`<span class="prefix">SID:</span> ${text}`, 'sid'); lobsterExcited(); }
-    function logSystem(text) { log(text, 'system'); }
-    function logError(text) { log(`<span class="prefix">ERR:</span> ${text}`, 'error'); }
-    function logVoice(text) { log(`<span class="prefix">🎙️</span> ${text}`, 'voice'); }
-    function logCode(text) { log(`<span class="prefix">></span> ${text}`, 'code'); }
+    function logSid(text) { log(`<span class="prefix">SID:</span> ${text}`, 'sid'); setMood('speaking'); }
     
     function playAudio(url) {
-      console.log('Playing audio:', url);
       audioPlayer.src = url;
-      audioPlayer.play().catch(e => logError('Audio: ' + e.message));
+      audioPlayer.play().catch(e => log('Audio error: ' + e.message, 'error'));
     }
     
-    async function speak(text, emotion = 'neutral') {
-      logVoice(`"${text}"`);
-      lobsterExcited();
-      document.getElementById('voice-status').textContent = 'Speaking...';
-      document.getElementById('voice-status').style.color = '#00ff41';
+    async function speak(text) {
+      log(`🎙️ "${text}"`, 'voice');
+      setMood('speaking');
       
       try {
         const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, emotion })
+          body: JSON.stringify({ text })
         });
         const data = await resp.json().catch(() => ({}));
         if (data.audioPath) playAudio(`${SID_URL}${data.audioPath}`);
       } catch (e) {
-        logError('Voice error: ' + e.message);
+        log('Voice error: ' + e.message, 'error');
       }
       
-      setTimeout(() => {
-        document.getElementById('voice-status').textContent = 'Ready to build';
-        document.getElementById('voice-status').style.color = '#666';
-      }, text.split(' ').length * 200);
+      setTimeout(() => setMood('chill'), text.split(' ').length * 250);
     }
     
     const commands = {
-      help: () => log(`Commands: gm, build, ship, debug, idea, review, deploy, test, clear`, 'system'),
-      gm: () => speak("GM! Coffee's brewing, VS Code is open. Let's ship something today."),
-      build: () => speak("Alright, let's architect this. No spaghetti code allowed."),
-      ship: () => speak("Ship it! We can iterate later. Done is better than perfect."),
-      debug: () => speak("Rubber duck time. Walk me through what's broken."),
+      help: () => log('Commands: gm, build, ship, debug, idea, hype, deploy, test, clear', 'system'),
+      gm: () => speak("GM! Coffee's ready, VS Code is open. Let's ship something today."),
+      build: () => { setMood('thinking'); speak("Alright, let's architect this properly. No spaghetti allowed."); },
+      ship: () => { setMood('excited'); speak("Ship it! Done is better than perfect. Let's go!"); },
+      debug: () => { setMood('thinking'); speak("Rubber duck time. Walk me through what's broken."); },
       idea: () => speak("I'm listening. What are we building?"),
-      review: () => speak("Let me take a look. Show me the code."),
-      deploy: () => { logCode('Deploying to production...'); setTimeout(() => log('✓ Deployed successfully', 'success'), 2000); },
-      test: () => { logCode('Running tests...'); setTimeout(() => log('✓ All tests passed', 'success'), 1500); },
-      clear: () => { output.innerHTML = ''; logSystem('Cleared'); },
-      status: async () => {
-        try {
-          const resp = await fetch(`${SID_URL}/status`);
-          const data = await resp.json();
-          log(`Status: ${data.isLive ? 'ONLINE' : 'OFFLINE'}`, 'system');
-        } catch { logError('Status failed'); }
-      }
+      hype: () => { setMood('excited'); speak("LET'S GOOO! We're building the future here! Ship it!"); },
+      deploy: () => { log('> Deploying...', 'code'); setTimeout(() => log('✓ Deployed!', 'success'), 2000); },
+      test: () => { log('> Running tests...', 'code'); setTimeout(() => log('✓ All tests passed', 'success'), 1500); },
+      clear: () => { output.innerHTML = ''; log('Cleared', 'system'); }
     };
     
     function cmd(text) { input.value = text; handleCommand(text); }
     
     function handleCommand(text) {
-      const [command, ...args] = text.trim().split(' ');
+      const [command] = text.trim().split(' ');
       log(`<span style="color:#666">$</span> ${text}`, '');
-      
-      if (commands[command]) commands[command](args.join(' '));
+      if (commands[command]) commands[command]();
       else if (text.trim()) speak(text);
     }
     
@@ -570,47 +660,33 @@
     });
     
     function connectSSE() {
-      logSystem('Connecting...');
-      eventSource = new EventSource(`${SID_URL}/events`);
-      
-      eventSource.onopen = () => {
-        document.getElementById('connection').innerHTML = '<span style="color:#00ff41">●</span> Connected';
-        logSystem('Connected to SID');
-      };
-      
-      eventSource.onmessage = (e) => {
+      const es = new EventSource(`${SID_URL}/events`);
+      es.onopen = () => { document.getElementById('connection').innerHTML = '<span style="color:#00ff41">●</span> Connected'; };
+      es.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
           if (data.type === 'speak') logSid(data.text);
-          if (data.type === 'audio' && data.path) playAudio(`${SID_URL}${data.path}`);
+          if (data.type === 'audio') playAudio(`${SID_URL}${data.path}`);
         } catch {}
       };
-      
-      eventSource.onerror = () => {
-        document.getElementById('connection').innerHTML = '<span style="color:#ff3333">●</span> Disconnected';
-        setTimeout(connectSSE, 5000);
-      };
+      es.onerror = () => setTimeout(connectSSE, 5000);
     }
     
-    function updateTime() {
-      document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-    }
+    function updateTime() { document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }
     
     initLobster();
-    logSystem('🦞 SID Builder v1.0');
-    logSystem('Type "help" for commands or just talk to me');
-    
+    log('🦞 SID Builder v1.0', 'system');
+    log('Click the lobster or type commands', 'system');
     connectSSE();
     updateTime();
     setInterval(updateTime, 1000);
-    
     document.addEventListener('click', () => input.focus());
     
     window.addEventListener('resize', () => {
-      const container = document.getElementById('lobster-container');
-      camera.aspect = container.clientWidth / container.clientHeight;
+      const c = document.getElementById('lobster-container');
+      camera.aspect = c.clientWidth / c.clientHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setSize(c.clientWidth, c.clientHeight);
     });
   </script>
 </body>
