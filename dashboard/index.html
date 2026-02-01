@@ -852,8 +852,9 @@ window.triggerAnimation = function(name) { window.setAnimation(name); };
 window.triggerExpression = function(name) { window.triggerMorph(name); };
 
 // ============ TERMINAL ============
-const SID_BACKEND = 'http://165.232.132.170:3456';
-const SID_URL = window.location.hostname.includes('trycloudflare') || window.location.port === '3456' ? '' : SID_BACKEND;
+// Use tunnel for HTTPS or direct for local
+const SID_BACKEND = 'https://travels-eastern-gmbh-chris.trycloudflare.com';
+const SID_URL = window.location.port === '3456' ? '' : SID_BACKEND;
 const AUTH_TOKEN = 'sid2026';
 const output = document.getElementById('output');
 const input = document.getElementById('input');
