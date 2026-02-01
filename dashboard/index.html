@@ -3,924 +3,302 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SID - Builder Bot</title>
+  <title>SID - Pump.fun Stream</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root { --green: #00ff41; --red: #ff3333; --cyan: #00ffff; --purple: #bf5fff; --bg: #0a0a0a; }
-    body { background: var(--bg); color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 14px; min-height: 100vh; overflow: hidden; }
-    .container { display: grid; grid-template-columns: 1fr 420px; grid-template-rows: auto 1fr auto; height: 100vh; gap: 1px; background: #333; }
-    .header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 8px 15px; background: #111; border-bottom: 1px solid #333; }
-    .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-text { font-size: 20px; font-weight: bold; }
-    .status-badge { background: var(--purple); color: #fff; padding: 2px 8px; font-size: 11px; font-weight: bold; }
-    .terminal { grid-column: 1; display: flex; flex-direction: column; background: var(--bg); }
-    .terminal-header { padding: 5px 10px; background: #1a1a1a; border-bottom: 1px solid #333; font-size: 12px; color: #666; }
-    .terminal-output { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; }
-    .terminal-line { margin-bottom: 4px; }
-    .terminal-line.system { color: #666; }
-    .terminal-line.sid { color: var(--cyan); }
-    .terminal-line.voice { color: #ff00ff; }
-    .terminal-line.success { color: var(--green); }
-    .terminal-line.error { color: var(--red); }
-    .timestamp { color: #444; margin-right: 8px; }
-    .prefix { font-weight: bold; margin-right: 5px; }
-    .terminal-input-wrap { display: flex; align-items: center; padding: 10px; background: #0f0f0f; border-top: 1px solid #333; }
-    .prompt { color: var(--green); margin-right: 8px; font-weight: bold; }
-    .terminal-input { flex: 1; background: transparent; border: none; color: var(--green); font-family: inherit; font-size: 14px; outline: none; }
-    .sidebar { display: flex; flex-direction: column; gap: 1px; background: #333; }
-    .sidebar-section { background: var(--bg); padding: 12px; }
-    .section-title { color: #666; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-    #lobster-container { width: 100%; height: 320px; position: relative; }
-    #lobster-canvas { width: 100%; height: 100%; cursor: grab; }
-    .controls-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-    .ctrl-btn { background: #1a1a1a; border: 1px solid #333; color: var(--cyan); padding: 4px 8px; font-family: inherit; font-size: 11px; cursor: pointer; border-radius: 3px; }
-    .ctrl-btn:hover { border-color: var(--cyan); }
-    .ctrl-btn.active { background: var(--cyan); color: #000; }
-    .ctrl-btn.morph { color: var(--purple); }
-    .ctrl-btn.morph:hover { border-color: var(--purple); }
-    .ctrl-btn.morph.active { background: var(--purple); color: #fff; }
-    .slider-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 11px; color: #666; }
-    .slider-row input { flex: 1; }
-    .slider-row span { min-width: 60px; }
-    .commands { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-    .cmd-btn { background: #1a1a1a; border: 1px solid #333; color: var(--green); padding: 8px 10px; font-family: inherit; font-size: 12px; cursor: pointer; transition: all 0.1s; }
-    .cmd-btn:hover { background: #222; border-color: var(--green); }
-    .cmd-btn.purple { color: var(--purple); }
-    .cmd-btn.purple:hover { border-color: var(--purple); }
-    .footer { grid-column: 1 / -1; display: flex; justify-content: space-between; padding: 6px 15px; background: #0f0f0f; border-top: 1px solid #333; font-size: 11px; color: #444; }
+    :root { --green: #00ff41; --red: #ff4444; --cyan: #00d4ff; --purple: #bf5fff; --bg: #0a0a0a; --card: #111; --border: #222; }
+    body { background: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+    
+    .container { display: grid; grid-template-columns: 1fr 380px; height: 100vh; }
+    
+    /* Left: Token Feed */
+    .feed { display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+    .feed-header { padding: 15px 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .feed-header h1 { font-size: 18px; color: var(--green); }
+    .feed-header .live { background: var(--red); color: #fff; padding: 3px 10px; font-size: 11px; border-radius: 3px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .tokens { flex: 1; overflow-y: auto; padding: 10px; }
+    .token-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 15px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+    .token-card:hover { border-color: var(--purple); transform: translateX(3px); }
+    .token-card.hot { border-color: var(--green); }
+    .token-card.new { animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .token-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .token-name { font-weight: bold; font-size: 15px; }
+    .token-ticker { color: var(--cyan); }
+    .token-mcap { color: var(--green); font-weight: bold; }
+    
+    .token-mid { display: flex; gap: 15px; font-size: 12px; color: #888; margin-bottom: 8px; }
+    .token-mid .up { color: var(--green); }
+    .token-mid .down { color: var(--red); }
+    
+    .token-bottom { display: flex; gap: 10px; }
+    .tag { background: #1a1a1a; padding: 3px 8px; border-radius: 3px; font-size: 11px; color: #666; }
+    .tag.twitter { color: #1da1f2; }
+    .tag.whale { color: var(--green); }
+    .tag.dev { color: var(--purple); }
+    
+    /* Right: Chat */
+    .chat { display: flex; flex-direction: column; background: var(--card); }
+    .chat-header { padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .chat-header h2 { font-size: 16px; }
+    .online { color: var(--green); font-size: 12px; }
+    
+    .messages { flex: 1; overflow-y: auto; padding: 15px; }
+    .message { margin-bottom: 12px; }
+    .message .meta { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .message .user { color: var(--purple); font-weight: bold; font-size: 13px; }
+    .message .time { color: #444; font-size: 11px; }
+    .message .text { color: #ccc; line-height: 1.4; }
+    .message.system { color: #666; font-style: italic; }
+    .message.sid .user { color: var(--cyan); }
+    .message.sid .text { color: var(--cyan); }
+    
+    .chat-input { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+    .chat-input input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: #fff; padding: 12px 15px; font-family: inherit; font-size: 14px; border-radius: 5px; outline: none; }
+    .chat-input input:focus { border-color: var(--purple); }
+    .chat-input button { background: var(--purple); border: none; color: #fff; padding: 12px 20px; font-family: inherit; font-size: 14px; cursor: pointer; border-radius: 5px; }
+    .chat-input button:hover { background: #9f3fff; }
+    
+    /* Mobile */
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+      .feed { border-right: none; border-bottom: 1px solid var(--border); }
+    }
+    
     ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #111; }
-    ::-webkit-scrollbar-thumb { background: #333; }
-    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .sidebar { display: none; } }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <div class="logo"><span class="logo-text">🦞 SID://</span><span class="status-badge">BUILDER</span></div>
-      <div style="color:#666;font-size:13px"><span id="time"></span></div>
-    </div>
-    <div class="terminal">
-      <div class="terminal-header">sid@dev:~/workspace$ <span id="mode">ready to build</span></div>
-      <div class="terminal-output" id="output"></div>
-      <div class="terminal-input-wrap">
-        <span class="prompt">sid&gt;</span>
-        <input type="text" class="terminal-input" id="input" placeholder="gm | build | ship | hype" autofocus>
+    <div class="feed">
+      <div class="feed-header">
+        <h1>🚀 pump.fun stream</h1>
+        <span class="live">● LIVE</span>
       </div>
+      <div class="tokens" id="tokens"></div>
     </div>
-    <div class="sidebar">
-      <div class="sidebar-section">
-        <div class="section-title">🦞 SID - Skeletal + Morph</div>
-        <div id="lobster-container"><canvas id="lobster-canvas"></canvas></div>
-        <div class="section-title" style="margin-top:12px">Animations</div>
-        <div class="controls-row">
-          <button class="ctrl-btn active" onclick="setAnimation('idle')">Idle</button>
-          <button class="ctrl-btn" onclick="setAnimation('walk')">Walk</button>
-          <button class="ctrl-btn" onclick="setAnimation('excited')">Hyped</button>
-          <button class="ctrl-btn" onclick="setAnimation('talk')">Talk</button>
-        </div>
-        <div class="section-title" style="margin-top:12px">Morph Targets</div>
-        <div class="controls-row">
-          <button class="ctrl-btn morph" onclick="triggerMorph('happy')">😊 Happy</button>
-          <button class="ctrl-btn morph" onclick="triggerMorph('angry')">😠 Angry</button>
-          <button class="ctrl-btn morph" onclick="triggerMorph('surprised')">😲 Surprise</button>
-          <button class="ctrl-btn morph" onclick="triggerMorph('puff')">🐡 Puff</button>
-        </div>
-        <div class="slider-row"><span>Happy</span><input type="range" min="0" max="100" value="0" oninput="setMorph('happy', this.value/100)"></div>
-        <div class="slider-row"><span>Angry</span><input type="range" min="0" max="100" value="0" oninput="setMorph('angry', this.value/100)"></div>
-        <div class="slider-row"><span>Surprised</span><input type="range" min="0" max="100" value="0" oninput="setMorph('surprised', this.value/100)"></div>
-        <div class="slider-row"><span>Puff Up</span><input type="range" min="0" max="100" value="0" oninput="setMorph('puff', this.value/100)"></div>
+    <div class="chat">
+      <div class="chat-header">
+        <h2>💬 Chat</h2>
+        <span class="online" id="online">● 0 online</span>
       </div>
-      <div class="sidebar-section">
-        <div class="section-title">⚡ Commands</div>
-        <div class="commands">
-          <button class="cmd-btn" onclick="cmd('gm')">gm</button>
-          <button class="cmd-btn" onclick="cmd('build')">build</button>
-          <button class="cmd-btn purple" onclick="cmd('ship')">ship it</button>
-          <button class="cmd-btn" onclick="cmd('hype')">hype</button>
-        </div>
+      <div class="messages" id="messages"></div>
+      <div class="chat-input">
+        <input type="text" id="input" placeholder="Say something..." autocomplete="off">
+        <button onclick="sendMessage()">Send</button>
       </div>
-    </div>
-    <div class="footer">
-      <span>SID v3.5 - Skeletal + Morph Targets</span>
-      <span id="connection">● Connected</span>
     </div>
   </div>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-    }
-  }
-  </script>
-  
-  <script type="module">
-import * as THREE from 'three';
-
-// =====================================================
-// SKELETAL LOBSTER WITH MORPH TARGETS
-// =====================================================
-
-let scene, camera, renderer, clock;
-let lobsterGroup, bodyMeshes = [], mixer;
-let skeleton, rootBone;
-let animations = {};
-let currentAction;
-let mouseX = 0, mouseY = 0;
-
-// Morph target influences (0-1)
-const morphState = {
-  happy: 0,
-  angry: 0,
-  surprised: 0,
-  puff: 0
-};
-
-// Morph animation targets
-const morphTargets = {
-  happy: 0,
-  angry: 0,
-  surprised: 0,
-  puff: 0
-};
-
-const MORPH_SPEED = 0.08;
-
-function init() {
-  const container = document.getElementById('lobster-container');
-  const canvas = document.getElementById('lobster-canvas');
-  
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 100);
-  camera.position.set(0, 0.5, 7);
-  camera.lookAt(0, 0, 0);
-  
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  
-  clock = new THREE.Clock();
-  
-  // Lighting
-  scene.add(new THREE.AmbientLight(0x404040, 2));
-  
-  const key = new THREE.SpotLight(0xbf5fff, 4, 30, 0.6, 0.5);
-  key.position.set(5, 8, 8);
-  key.castShadow = true;
-  scene.add(key);
-  
-  const fill = new THREE.PointLight(0x00ff41, 2, 20);
-  fill.position.set(-5, -2, 4);
-  scene.add(fill);
-  
-  const rim = new THREE.PointLight(0x00ffff, 1.5, 15);
-  rim.position.set(0, 3, -6);
-  scene.add(rim);
-  
-  buildLobsterWithMorphs();
-  createAnimations();
-  setupInteraction(canvas);
-  animate();
-  
-  window.addEventListener('resize', onResize);
-}
-
-// Create geometry with morph targets
-function createMorphGeometry(baseRadius, length, squash = {x:1, y:1, z:1}) {
-  const segments = 16;
-  const rings = 12;
-  
-  const geometry = new THREE.BufferGeometry();
-  const vertices = [];
-  const normals = [];
-  const uvs = [];
-  
-  // Base shape
-  for (let ring = 0; ring <= rings; ring++) {
-    const v = ring / rings;
-    const x = (v - 0.5) * length;
-    
-    for (let seg = 0; seg <= segments; seg++) {
-      const u = seg / segments;
-      const theta = u * Math.PI * 2;
-      
-      // Taper ends
-      const taper = 1 - Math.pow(Math.abs(v - 0.5) * 2, 2) * 0.3;
-      const r = baseRadius * taper;
-      
-      vertices.push(
-        x * squash.x,
-        Math.cos(theta) * r * squash.y,
-        Math.sin(theta) * r * squash.z
-      );
-      
-      normals.push(0, Math.cos(theta), Math.sin(theta));
-      uvs.push(u, v);
-    }
-  }
-  
-  // Indices
-  const indices = [];
-  for (let ring = 0; ring < rings; ring++) {
-    for (let seg = 0; seg < segments; seg++) {
-      const a = ring * (segments + 1) + seg;
-      const b = a + 1;
-      const c = a + segments + 1;
-      const d = c + 1;
-      indices.push(a, b, c, b, d, c);
-    }
-  }
-  
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.setIndex(indices);
-  
-  // === MORPH TARGETS ===
-  
-  // Happy: slightly bigger, rounder
-  const happyPositions = vertices.slice();
-  for (let i = 0; i < happyPositions.length; i += 3) {
-    happyPositions[i] *= 1.05;     // x stretch
-    happyPositions[i+1] *= 1.15;   // y inflate
-    happyPositions[i+2] *= 1.15;   // z inflate
-  }
-  
-  // Angry: squashed, spiky
-  const angryPositions = vertices.slice();
-  for (let i = 0; i < angryPositions.length; i += 3) {
-    const ring = Math.floor((i/3) / (segments + 1));
-    const noise = Math.sin(ring * 2.5) * 0.08;
-    angryPositions[i] *= 0.9;           // x compress
-    angryPositions[i+1] *= 0.85 + noise; // y squash with spikes
-    angryPositions[i+2] *= 0.85 + noise; // z squash with spikes
-  }
-  
-  // Surprised: stretched tall
-  const surprisedPositions = vertices.slice();
-  for (let i = 0; i < surprisedPositions.length; i += 3) {
-    surprisedPositions[i] *= 0.85;    // x compress
-    surprisedPositions[i+1] *= 1.4;   // y tall
-    surprisedPositions[i+2] *= 1.3;   // z wide
-  }
-  
-  // Puff: inflated like a balloon
-  const puffPositions = vertices.slice();
-  for (let i = 0; i < puffPositions.length; i += 3) {
-    puffPositions[i] *= 1.3;      // x bigger
-    puffPositions[i+1] *= 1.5;    // y balloon
-    puffPositions[i+2] *= 1.5;    // z balloon
-  }
-  
-  geometry.morphAttributes.position = [
-    new THREE.Float32BufferAttribute(happyPositions, 3),
-    new THREE.Float32BufferAttribute(angryPositions, 3),
-    new THREE.Float32BufferAttribute(surprisedPositions, 3),
-    new THREE.Float32BufferAttribute(puffPositions, 3)
-  ];
-  
-  geometry.morphTargetsRelative = false;
-  
-  return geometry;
-}
-
-function buildLobsterWithMorphs() {
-  lobsterGroup = new THREE.Group();
-  
-  // Shell material with morphs
-  const shellMat = new THREE.MeshPhysicalMaterial({
-    color: 0xbf5fff,
-    metalness: 0.1,
-    roughness: 0.3,
-    clearcoat: 0.8,
-    clearcoatRoughness: 0.2,
-    emissive: 0x2a0055,
-    emissiveIntensity: 0.2
-  });
-  
-  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x00ff41 });
-  const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-  
-  // === BONES ===
-  rootBone = new THREE.Bone();
-  rootBone.name = 'root';
-  const bones = [rootBone];
-  
-  // Body bones
-  let parentBone = rootBone;
-  const bodyBones = [];
-  for (let i = 0; i < 5; i++) {
-    const bone = new THREE.Bone();
-    bone.name = `body_${i}`;
-    bone.position.x = i === 0 ? 0 : -0.3;
-    parentBone.add(bone);
-    bones.push(bone);
-    bodyBones.push(bone);
-    parentBone = bone;
-  }
-  
-  // Tail bones
-  const tailBones = [];
-  for (let i = 0; i < 6; i++) {
-    const bone = new THREE.Bone();
-    bone.name = `tail_${i}`;
-    bone.position.x = -0.22;
-    parentBone.add(bone);
-    bones.push(bone);
-    tailBones.push(bone);
-    parentBone = bone;
-  }
-  
-  // Head bone
-  const headBone = new THREE.Bone();
-  headBone.name = 'head';
-  headBone.position.set(0.5, 0.1, 0);
-  bodyBones[0].add(headBone);
-  bones.push(headBone);
-  
-  // Eye bones
-  const eyeBones = [];
-  [-0.2, 0.2].forEach((z, idx) => {
-    const stalk = new THREE.Bone();
-    stalk.name = `eye_stalk_${idx}`;
-    stalk.position.set(0.15, 0.2, z);
-    headBone.add(stalk);
-    bones.push(stalk);
-    
-    const eye = new THREE.Bone();
-    eye.name = `eye_${idx}`;
-    eye.position.set(0.05, 0.15, 0);
-    stalk.add(eye);
-    bones.push(eye);
-    eyeBones.push(eye);
-  });
-  
-  // Claw bones
-  const clawBones = { left: [], right: [] };
-  [-0.45, 0.45].forEach((z, idx) => {
-    const side = idx === 0 ? 'left' : 'right';
-    const shoulder = new THREE.Bone();
-    shoulder.name = `claw_shoulder_${side}`;
-    shoulder.position.set(0.2, 0, z);
-    bodyBones[0].add(shoulder);
-    bones.push(shoulder);
-    
-    const upper = new THREE.Bone();
-    upper.name = `claw_upper_${side}`;
-    upper.position.x = 0.28;
-    shoulder.add(upper);
-    bones.push(upper);
-    
-    const forearm = new THREE.Bone();
-    forearm.name = `claw_forearm_${side}`;
-    forearm.position.x = 0.25;
-    upper.add(forearm);
-    bones.push(forearm);
-    
-    const pincer = new THREE.Bone();
-    pincer.name = `claw_pincer_${side}`;
-    pincer.position.x = 0.2;
-    forearm.add(pincer);
-    bones.push(pincer);
-    
-    const pincerTop = new THREE.Bone();
-    pincerTop.name = `claw_pincer_top_${side}`;
-    pincerTop.position.set(0.1, 0.05, 0);
-    pincer.add(pincerTop);
-    bones.push(pincerTop);
-    
-    clawBones[side] = { shoulder, upper, forearm, pincer, pincerTop };
-  });
-  
-  // Leg bones
-  const legBones = [];
-  for (let i = 0; i < 4; i++) {
-    [-0.28, 0.28].forEach((z, idx) => {
-      const hip = new THREE.Bone();
-      hip.name = `leg_hip_${i}_${idx}`;
-      hip.position.set(-0.1 * i, -0.12, z);
-      bodyBones[Math.min(i, 3)].add(hip);
-      bones.push(hip);
-      
-      const knee = new THREE.Bone();
-      knee.name = `leg_knee_${i}_${idx}`;
-      knee.position.set(0, -0.18, z > 0 ? 0.06 : -0.06);
-      hip.add(knee);
-      bones.push(knee);
-      
-      const foot = new THREE.Bone();
-      foot.name = `leg_foot_${i}_${idx}`;
-      foot.position.set(0, -0.14, 0);
-      knee.add(foot);
-      bones.push(foot);
-      
-      legBones.push({ hip, knee, foot, side: idx, index: i });
-    });
-  }
-  
-  // Antenna bones
-  const antennaBones = [];
-  [-0.12, 0.12].forEach((z, idx) => {
-    let parent = headBone;
-    const chain = [];
-    for (let i = 0; i < 8; i++) {
-      const bone = new THREE.Bone();
-      bone.name = `antenna_${idx}_${i}`;
-      bone.position.set(i === 0 ? 0.2 : 0.12, i === 0 ? 0.05 : 0.02, i === 0 ? z : 0);
-      parent.add(bone);
-      bones.push(bone);
-      chain.push(bone);
-      parent = bone;
-    }
-    antennaBones.push(chain);
-  });
-  
-  skeleton = new THREE.Skeleton(bones);
-  
-  // === CREATE MESHES WITH MORPH TARGETS ===
-  
-  // Body segments
-  bodyBones.forEach((bone, i) => {
-    const geo = createMorphGeometry(0.35 - i * 0.03, 0.35, { x: 1, y: 0.7, z: 0.85 });
-    const mesh = new THREE.Mesh(geo, shellMat.clone());
-    mesh.morphTargetInfluences = [0, 0, 0, 0]; // happy, angry, surprised, puff
-    bone.add(mesh);
-    mesh.castShadow = true;
-    bodyMeshes.push(mesh);
-  });
-  
-  // Tail segments
-  tailBones.forEach((bone, i) => {
-    const geo = createMorphGeometry(0.22 - i * 0.022, 0.2, { x: 1, y: 0.8, z: 0.9 });
-    const mesh = new THREE.Mesh(geo, shellMat.clone());
-    mesh.morphTargetInfluences = [0, 0, 0, 0];
-    bone.add(mesh);
-    mesh.castShadow = true;
-    bodyMeshes.push(mesh);
-  });
-  
-  // Head
-  const headGeo = createMorphGeometry(0.38, 0.5, { x: 1.1, y: 0.75, z: 0.7 });
-  const headMesh = new THREE.Mesh(headGeo, shellMat.clone());
-  headMesh.morphTargetInfluences = [0, 0, 0, 0];
-  headMesh.position.x = 0.1;
-  headBone.add(headMesh);
-  bodyMeshes.push(headMesh);
-  
-  // Eyes with morph targets
-  eyeBones.forEach((eyeBone, idx) => {
-    // Eye ball (will morph)
-    const eyeGeo = new THREE.SphereGeometry(0.1, 16, 16);
-    
-    // Eye morphs
-    const eyePositions = eyeGeo.attributes.position.array.slice();
-    
-    // Happy eyes: squinted (flattened)
-    const happyEye = eyePositions.slice();
-    for (let i = 0; i < happyEye.length; i += 3) {
-      happyEye[i+1] *= 0.5; // squint y
-    }
-    
-    // Angry eyes: narrowed
-    const angryEye = eyePositions.slice();
-    for (let i = 0; i < angryEye.length; i += 3) {
-      angryEye[i+1] *= 0.3;
-      angryEye[i] *= 1.3;
-    }
-    
-    // Surprised eyes: wide
-    const surprisedEye = eyePositions.slice();
-    for (let i = 0; i < surprisedEye.length; i += 3) {
-      surprisedEye[i+1] *= 1.5;
-      surprisedEye[i+2] *= 1.3;
-    }
-    
-    // Puff eyes: bulging
-    const puffEye = eyePositions.slice();
-    for (let i = 0; i < puffEye.length; i += 3) {
-      puffEye[i] *= 1.4;
-      puffEye[i+1] *= 1.4;
-      puffEye[i+2] *= 1.4;
-    }
-    
-    eyeGeo.morphAttributes.position = [
-      new THREE.Float32BufferAttribute(happyEye, 3),
-      new THREE.Float32BufferAttribute(angryEye, 3),
-      new THREE.Float32BufferAttribute(surprisedEye, 3),
-      new THREE.Float32BufferAttribute(puffEye, 3)
-    ];
-    
-    const eyeMesh = new THREE.Mesh(eyeGeo, eyeMat);
-    eyeMesh.morphTargetInfluences = [0, 0, 0, 0];
-    eyeBone.add(eyeMesh);
-    bodyMeshes.push(eyeMesh);
-    
-    // Pupil
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), pupilMat);
-    pupil.position.z = 0.07;
-    eyeBone.add(pupil);
-  });
-  
-  // Claws
-  ['left', 'right'].forEach(side => {
-    const cb = clawBones[side];
-    
-    [{ bone: cb.upper, r: 0.1, l: 0.25 },
-     { bone: cb.forearm, r: 0.12, l: 0.22 },
-     { bone: cb.pincer, r: 0.1, l: 0.18 },
-     { bone: cb.pincerTop, r: 0.06, l: 0.15 }].forEach(cfg => {
-      const geo = createMorphGeometry(cfg.r, cfg.l);
-      const mesh = new THREE.Mesh(geo, shellMat.clone());
-      mesh.morphTargetInfluences = [0, 0, 0, 0];
-      cfg.bone.add(mesh);
-      mesh.castShadow = true;
-      bodyMeshes.push(mesh);
-    });
-  });
-  
-  // Legs
-  legBones.forEach(lb => {
-    [{ bone: lb.hip, r: 0.035, l: 0.14 },
-     { bone: lb.knee, r: 0.028, l: 0.16 },
-     { bone: lb.foot, r: 0.022, l: 0.1 }].forEach(cfg => {
-      const geo = createMorphGeometry(cfg.r, cfg.l);
-      const mesh = new THREE.Mesh(geo, shellMat.clone());
-      mesh.morphTargetInfluences = [0, 0, 0, 0];
-      cfg.bone.add(mesh);
-      mesh.castShadow = true;
-      bodyMeshes.push(mesh);
-    });
-  });
-  
-  // Antennae
-  antennaBones.forEach(chain => {
-    chain.forEach((bone, i) => {
-      const geo = createMorphGeometry(0.02 - i * 0.002, 0.1);
-      const mesh = new THREE.Mesh(geo, shellMat.clone());
-      mesh.morphTargetInfluences = [0, 0, 0, 0];
-      bone.add(mesh);
-      bodyMeshes.push(mesh);
-    });
-  });
-  
-  // Add skeleton helper group
-  lobsterGroup.add(rootBone);
-  lobsterGroup.rotation.y = Math.PI / 2;
-  scene.add(lobsterGroup);
-  
-  // Store references
-  lobsterGroup.userData = { bodyBones, tailBones, headBone, eyeBones, clawBones, legBones, antennaBones };
-  
-  // Animation mixer
-  mixer = new THREE.AnimationMixer(lobsterGroup);
-}
-
-function createAnimations() {
-  const ud = lobsterGroup.userData;
-  
-  // === IDLE ===
-  const idleTracks = [];
-  const idleDuration = 4;
-  
-  // Body sway
-  ud.bodyBones.forEach((bone, i) => {
-    const times = [0, 1, 2, 3, 4];
-    const values = [];
-    times.forEach(t => {
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-        0,
-        Math.sin(t * Math.PI / 2) * 0.03 * (i + 1),
-        Math.sin(t * Math.PI / 2 + i) * 0.02
-      ));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    idleTracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid + '.quaternion', times, values));
-  });
-  
-  // Tail wave
-  ud.tailBones.forEach((bone, i) => {
-    const times = [0, 1, 2, 3, 4];
-    const values = [];
-    times.forEach(t => {
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(
-        Math.sin(t * Math.PI / 2 + i * 0.5) * 0.06,
-        Math.sin(t * Math.PI / 2 + i * 0.5) * 0.08,
-        0
-      ));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    idleTracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid + '.quaternion', times, values));
-  });
-  
-  // Claw idle
-  ['left', 'right'].forEach((side, idx) => {
-    const shoulder = ud.clawBones[side].shoulder;
-    const times = [0, 1.5, 3, 4];
-    const values = [];
-    times.forEach(t => {
-      const angle = Math.sin(t * Math.PI / 2) * 0.15 * (idx === 0 ? 1 : -1);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, angle * 0.5));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    idleTracks.push(new THREE.QuaternionKeyframeTrack(shoulder.uuid + '.quaternion', times, values));
-  });
-  
-  // Antennae flow
-  ud.antennaBones.forEach((chain, idx) => {
-    chain.forEach((bone, i) => {
-      const times = [0, 1, 2, 3, 4];
-      const values = [];
-      times.forEach(t => {
-        const angle = Math.sin(t * Math.PI / 2 + i * 0.3) * 0.12 * (idx === 0 ? 1 : -1);
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle * 0.3, angle, 0));
-        values.push(q.x, q.y, q.z, q.w);
-      });
-      idleTracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid + '.quaternion', times, values));
-    });
-  });
-  
-  animations.idle = mixer.clipAction(new THREE.AnimationClip('idle', idleDuration, idleTracks));
-  animations.idle.setLoop(THREE.LoopRepeat);
-  
-  // === WALK ===
-  const walkTracks = [];
-  const walkDuration = 1;
-  
-  ud.legBones.forEach(lb => {
-    const phase = (lb.index * 0.25 + lb.side * 0.5) % 1;
-    
-    [{ bone: lb.hip, amp: 0.4, offset: 0 },
-     { bone: lb.knee, amp: 0.5, offset: 0.2 },
-     { bone: lb.foot, amp: 0.3, offset: 0.4 }].forEach(cfg => {
-      const times = [0, 0.25, 0.5, 0.75, 1];
-      const values = [];
-      times.forEach(t => {
-        const cycle = (t + phase) % 1;
-        const angle = Math.sin(cycle * Math.PI * 2 + cfg.offset) * cfg.amp;
-        const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, lb.side === 0 ? -0.15 : 0.15));
-        values.push(q.x, q.y, q.z, q.w);
-      });
-      walkTracks.push(new THREE.QuaternionKeyframeTrack(cfg.bone.uuid + '.quaternion', times, values));
-    });
-  });
-  
-  // Body bob
-  const bobTimes = [0, 0.25, 0.5, 0.75, 1];
-  const bobValues = [];
-  bobTimes.forEach(t => bobValues.push(0, Math.sin(t * Math.PI * 4) * 0.04, 0));
-  walkTracks.push(new THREE.VectorKeyframeTrack(rootBone.uuid + '.position', bobTimes, bobValues));
-  
-  animations.walk = mixer.clipAction(new THREE.AnimationClip('walk', walkDuration, walkTracks));
-  animations.walk.setLoop(THREE.LoopRepeat);
-  
-  // === EXCITED ===
-  const excitedTracks = [];
-  const excitedDuration = 0.5;
-  
-  // Fast tail
-  ud.tailBones.forEach((bone, i) => {
-    const times = [0, 0.125, 0.25, 0.375, 0.5];
-    const values = [];
-    times.forEach(t => {
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.sin(t * Math.PI * 8 + i) * 0.25, Math.sin(t * Math.PI * 8 + i) * 0.15));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    excitedTracks.push(new THREE.QuaternionKeyframeTrack(bone.uuid + '.quaternion', times, values));
-  });
-  
-  // Claw wave
-  ['left', 'right'].forEach((side, idx) => {
-    const times = [0, 0.125, 0.25, 0.375, 0.5];
-    const values = [];
-    times.forEach(t => {
-      const angle = Math.sin(t * Math.PI * 8) * 0.5 * (idx === 0 ? 1 : -1);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, angle * 0.5, 0));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    excitedTracks.push(new THREE.QuaternionKeyframeTrack(ud.clawBones[side].shoulder.uuid + '.quaternion', times, values));
-  });
-  
-  // Bounce
-  const bounceTimes = [0, 0.125, 0.25, 0.375, 0.5];
-  const bounceValues = [];
-  bounceTimes.forEach(t => bounceValues.push(0, Math.abs(Math.sin(t * Math.PI * 4)) * 0.12, 0));
-  excitedTracks.push(new THREE.VectorKeyframeTrack(rootBone.uuid + '.position', bounceTimes, bounceValues));
-  
-  animations.excited = mixer.clipAction(new THREE.AnimationClip('excited', excitedDuration, excitedTracks));
-  animations.excited.setLoop(THREE.LoopRepeat);
-  
-  // === TALK ===
-  const talkTracks = [];
-  const talkDuration = 0.4;
-  
-  // Head bob
-  const headTimes = [0, 0.1, 0.2, 0.3, 0.4];
-  const headValues = [];
-  headTimes.forEach(t => {
-    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.sin(t * Math.PI * 10) * 0.12, Math.sin(t * Math.PI * 5) * 0.08, 0));
-    headValues.push(q.x, q.y, q.z, q.w);
-  });
-  talkTracks.push(new THREE.QuaternionKeyframeTrack(ud.headBone.uuid + '.quaternion', headTimes, headValues));
-  
-  // Claw gesture
-  ['left', 'right'].forEach((side, idx) => {
-    const times = [0, 0.2, 0.4];
-    const values = [];
-    times.forEach((t, i) => {
-      const angle = (i === 1 ? 0.35 : 0) * (idx === 0 ? 1 : -1);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(angle, 0, angle * 0.3));
-      values.push(q.x, q.y, q.z, q.w);
-    });
-    talkTracks.push(new THREE.QuaternionKeyframeTrack(ud.clawBones[side].forearm.uuid + '.quaternion', times, values));
-  });
-  
-  animations.talk = mixer.clipAction(new THREE.AnimationClip('talk', talkDuration, talkTracks));
-  animations.talk.setLoop(THREE.LoopRepeat);
-  
-  // Start idle
-  currentAction = animations.idle;
-  currentAction.play();
-}
-
-window.setAnimation = function(name) {
-  if (!animations[name]) return;
-  
-  document.querySelectorAll('.ctrl-btn:not(.morph)').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.toLowerCase() === name || 
-      (name === 'excited' && btn.textContent === 'Hyped'));
-  });
-  
-  const prev = currentAction;
-  currentAction = animations[name];
-  
-  if (prev !== currentAction) {
-    prev.fadeOut(0.3);
-    currentAction.reset().setEffectiveWeight(1).fadeIn(0.3).play();
-  }
-};
-
-window.setMorph = function(name, value) {
-  morphTargets[name] = value;
-};
-
-window.triggerMorph = function(name) {
-  // Animate to full then back
-  morphTargets[name] = 1;
-  setTimeout(() => { morphTargets[name] = 0; }, 800);
-};
-
-function updateMorphs() {
-  // Smoothly interpolate morph values
-  ['happy', 'angry', 'surprised', 'puff'].forEach((name, idx) => {
-    morphState[name] += (morphTargets[name] - morphState[name]) * MORPH_SPEED;
-  });
-  
-  // Apply to all meshes
-  bodyMeshes.forEach(mesh => {
-    if (mesh.morphTargetInfluences) {
-      mesh.morphTargetInfluences[0] = morphState.happy;
-      mesh.morphTargetInfluences[1] = morphState.angry;
-      mesh.morphTargetInfluences[2] = morphState.surprised;
-      mesh.morphTargetInfluences[3] = morphState.puff;
-    }
-  });
-}
-
-function setupInteraction(canvas) {
-  canvas.addEventListener('mousemove', (e) => {
-    const rect = canvas.getBoundingClientRect();
-    mouseX = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
-    mouseY = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
-  });
-  
-  canvas.addEventListener('click', () => {
-    triggerMorph('surprised');
-  });
-  
-  let isDragging = false, lastX = 0;
-  canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; });
-  canvas.addEventListener('mouseup', () => isDragging = false);
-  canvas.addEventListener('mouseleave', () => isDragging = false);
-  canvas.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-      lobsterGroup.rotation.y += (e.clientX - lastX) * 0.01;
-      lastX = e.clientX;
-    }
-  });
-}
-
-function onResize() {
-  const container = document.getElementById('lobster-container');
-  camera.aspect = container.clientWidth / container.clientHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
-}
-
-function animate() {
-  requestAnimationFrame(animate);
-  
-  const delta = clock.getDelta();
-  const time = clock.getElapsedTime();
-  
-  if (mixer) mixer.update(delta);
-  
-  updateMorphs();
-  
-  // Eye tracking
-  const ud = lobsterGroup.userData;
-  if (ud.eyeBones) {
-    ud.eyeBones.forEach(eye => {
-      eye.rotation.y += (mouseX * 0.4 - eye.rotation.y) * 0.1;
-      eye.rotation.x += (-mouseY * 0.3 - eye.rotation.x) * 0.1;
-    });
-  }
-  
-  // Breathing
-  lobsterGroup.position.y = Math.sin(time * 1.5) * 0.05;
-  
-  renderer.render(scene, camera);
-}
-
-init();
-
-// Export for terminal
-window.triggerAnimation = function(name) { window.setAnimation(name); };
-window.triggerExpression = function(name) { window.triggerMorph(name); };
-
-// ============ TERMINAL ============
-// Use tunnel for HTTPS or direct for local
-const SID_BACKEND = 'https://travels-eastern-gmbh-chris.trycloudflare.com';
-const SID_URL = window.location.port === '3456' ? '' : SID_BACKEND;
+  <script>
+// Config - use current tunnel
+const SID_URL = window.location.hostname.includes('vercel') 
+  ? 'https://travels-eastern-gmbh-chris.trycloudflare.com'
+  : '';
 const AUTH_TOKEN = 'sid2026';
-const output = document.getElementById('output');
-const input = document.getElementById('input');
-let audioPlayer = new Audio();
-let audioUnlocked = false;
 
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioPlayer.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAD/+1DEAAAHAAGf9AAAIwAANIAAAAQ=';
-  audioPlayer.play().then(() => { audioPlayer.pause(); audioUnlocked = true; log('🔊 Audio', 'system'); }).catch(() => {});
-}
-document.addEventListener('click', unlockAudio);
+// State
+let username = 'anon_' + Math.random().toString(36).slice(2, 6);
+let tokens = [];
+let onlineCount = 1;
 
-function log(text, type = '') {
-  const line = document.createElement('div');
-  line.className = `terminal-line ${type}`;
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-  line.innerHTML = `<span class="timestamp">[${time}]</span> ${text}`;
-  output.appendChild(line);
-  output.scrollTop = output.scrollHeight;
-  while (output.children.length > 100) output.removeChild(output.firstChild);
+// DOM
+const tokensEl = document.getElementById('tokens');
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('input');
+const onlineEl = document.getElementById('online');
+
+// Format helpers
+function formatMcap(mcap) {
+  if (mcap >= 1000000) return '$' + (mcap / 1000000).toFixed(2) + 'M';
+  if (mcap >= 1000) return '$' + (mcap / 1000).toFixed(1) + 'K';
+  return '$' + mcap.toFixed(0);
 }
 
-async function speak(text) {
-  log(`🎙️ "${text}"`, 'voice');
-  window.setAnimation('talk');
-  window.triggerMorph('happy');
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Render token card
+function renderToken(token, isNew = false) {
+  const change = token.change5m || 0;
+  const changeClass = change >= 0 ? 'up' : 'down';
+  const changeStr = (change >= 0 ? '+' : '') + change.toFixed(1) + '%';
+  
+  const tags = [];
+  if (token.twitter) tags.push('<span class="tag twitter">𝕏 linked</span>');
+  if (token.whales && token.whales > 0) tags.push(`<span class="tag whale">🐋 ${token.whales}</span>`);
+  if (token.devHolding < 5) tags.push('<span class="tag dev">dev &lt;5%</span>');
+  
+  const isHot = token.score >= 60 || change > 20;
+  
+  return `
+    <div class="token-card ${isHot ? 'hot' : ''} ${isNew ? 'new' : ''}" onclick="selectToken('${token.mint}')">
+      <div class="token-top">
+        <span class="token-name">${token.name || 'Unknown'} <span class="token-ticker">$${token.symbol || '???'}</span></span>
+        <span class="token-mcap">${formatMcap(token.mcap || 0)}</span>
+      </div>
+      <div class="token-mid">
+        <span>Score: ${token.score || 0}</span>
+        <span class="${changeClass}">5m: ${changeStr}</span>
+        <span>Buys: ${token.buyRatio || 50}%</span>
+      </div>
+      <div class="token-bottom">${tags.join('')}</div>
+    </div>
+  `;
+}
+
+function updateTokens() {
+  tokensEl.innerHTML = tokens.slice(0, 30).map((t, i) => renderToken(t, i === 0 && t._new)).join('');
+}
+
+function selectToken(mint) {
+  const token = tokens.find(t => t.mint === mint);
+  if (token) {
+    addMessage('system', `📊 ${token.name} ($${token.symbol}) - MC: ${formatMcap(token.mcap)}`);
+    // Could open detail panel here
+  }
+}
+
+// Chat
+function addMessage(type, text, user = 'system') {
+  const msg = document.createElement('div');
+  msg.className = `message ${type}`;
+  
+  if (type === 'system') {
+    msg.innerHTML = text;
+  } else {
+    msg.innerHTML = `
+      <div class="meta">
+        <span class="user">${user}</span>
+        <span class="time">${formatTime(new Date())}</span>
+      </div>
+      <div class="text">${text}</div>
+    `;
+  }
+  
+  messagesEl.appendChild(msg);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  
+  // Keep only last 100 messages
+  while (messagesEl.children.length > 100) {
+    messagesEl.removeChild(messagesEl.firstChild);
+  }
+}
+
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  
+  inputEl.value = '';
+  addMessage('user', text, username);
+  
+  // Send to server
   try {
-    const resp = await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
-    const data = await resp.json().catch(() => ({}));
-    if (data.audioPath) { audioPlayer.src = `${SID_URL}${data.audioPath}`; audioPlayer.play().catch(() => {}); }
-  } catch (e) { log('Voice error: ' + e.message, 'error'); }
-  setTimeout(() => window.setAnimation('idle'), text.split(' ').length * 250);
+    await fetch(`${SID_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: username, text, token: AUTH_TOKEN })
+    });
+  } catch (e) {
+    // Local mode
+  }
 }
 
-const commands = {
-  help: () => log('Commands: gm, build, ship, hype, angry, puff', 'system'),
-  gm: () => { triggerMorph('happy'); speak("GM! Let's ship something."); },
-  build: () => { window.setAnimation('walk'); speak("Building..."); },
-  ship: () => { window.setAnimation('excited'); triggerMorph('happy'); speak("Ship it!"); },
-  hype: () => { window.setAnimation('excited'); triggerMorph('puff'); speak("LET'S GOOO!"); },
-  angry: () => { triggerMorph('angry'); speak("Don't push my buttons."); },
-  puff: () => { triggerMorph('puff'); },
-  clear: () => { output.innerHTML = ''; }
-};
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
 
-function cmd(text) { input.value = text; handleCommand(text); }
-function handleCommand(text) {
-  const [c] = text.trim().split(' ');
-  log(`$ ${text}`, 'system');
-  if (commands[c]) commands[c]();
-  else if (text.trim()) speak(text);
-}
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && input.value.trim()) { handleCommand(input.value); input.value = ''; } });
-
-function connectSSE() {
+// SSE Connection
+function connect() {
   const es = new EventSource(`${SID_URL}/events`);
-  es.onopen = () => { document.getElementById('connection').innerHTML = '<span style="color:#00ff41">●</span> Connected'; };
-  es.onmessage = (e) => { try { const d = JSON.parse(e.data); if (d.type === 'speak') { log(`<span class="prefix">SID:</span> ${d.text}`, 'sid'); window.setAnimation('talk'); triggerMorph('happy'); } if (d.type === 'audio') { audioPlayer.src = `${SID_URL}${d.path}`; audioPlayer.play().catch(() => {}); } } catch {} };
-  es.onerror = () => setTimeout(connectSSE, 5000);
+  
+  es.onopen = () => {
+    addMessage('system', '🟢 Connected to stream');
+  };
+  
+  es.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      
+      if (data.type === 'token') {
+        // New token from scanner
+        const existing = tokens.findIndex(t => t.mint === data.token.mint);
+        if (existing >= 0) {
+          tokens[existing] = { ...tokens[existing], ...data.token };
+        } else {
+          data.token._new = true;
+          tokens.unshift(data.token);
+          setTimeout(() => { data.token._new = false; }, 1000);
+        }
+        updateTokens();
+      }
+      
+      if (data.type === 'chat') {
+        addMessage(data.from === 'SID' ? 'sid' : 'user', data.text, data.from);
+      }
+      
+      if (data.type === 'online') {
+        onlineCount = data.count;
+        onlineEl.textContent = `● ${onlineCount} online`;
+      }
+      
+      if (data.type === 'speak') {
+        addMessage('sid', data.text, '🦞 SID');
+      }
+      
+    } catch (e) {}
+  };
+  
+  es.onerror = () => {
+    addMessage('system', '🔴 Disconnected, reconnecting...');
+    es.close();
+    setTimeout(connect, 3000);
+  };
 }
 
-log('🦞 SID v3.5 - Skeletal + Morph Targets', 'system');
-log('Click = Surprised! Use sliders to morph.', 'system');
-connectSSE();
-setInterval(() => { document.getElementById('time').textContent = new Date().toLocaleTimeString('en-US', { hour12: false }); }, 1000);
+// Mock tokens for demo (will be replaced by real scanner data)
+function mockTokens() {
+  const names = ['PEPE2', 'WOJAK', 'DOGE420', 'MOONCAT', 'GIGACHAD', 'BASED', 'COPE', 'FREN'];
+  const syms = ['PEPE2', 'WOJ', 'D420', 'MCAT', 'GIGA', 'BASED', 'COPE', 'FREN'];
+  
+  for (let i = 0; i < 8; i++) {
+    tokens.push({
+      mint: 'mock_' + i,
+      name: names[i],
+      symbol: syms[i],
+      mcap: Math.random() * 100000 + 10000,
+      score: Math.floor(Math.random() * 40) + 40,
+      change5m: (Math.random() - 0.4) * 50,
+      buyRatio: Math.floor(Math.random() * 30) + 40,
+      twitter: Math.random() > 0.7,
+      whales: Math.floor(Math.random() * 3),
+      devHolding: Math.random() * 15
+    });
+  }
+  updateTokens();
+}
+
+// Init
+addMessage('system', '🚀 SID Pump Stream v1.0');
+addMessage('system', '👀 Watching pump.fun for new tokens...');
+mockTokens();
+connect();
+
+// Prompt for username
+setTimeout(() => {
+  const name = prompt('Enter your name:', username);
+  if (name && name.trim()) {
+    username = name.trim().slice(0, 16);
+    addMessage('system', `Welcome, ${username}! 👋`);
+  }
+}, 500);
   </script>
 </body>
 </html>
