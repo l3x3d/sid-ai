@@ -1,18 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "dashboard/index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "avatar/index.html", 
-      "use": "@vercel/static"
-    }
-  ],
+  "buildCommand": "",
+  "outputDirectory": ".",
   "routes": [
     { "src": "/", "dest": "/dashboard/index.html" },
-    { "src": "/avatar", "dest": "/avatar/index.html" },
-    { "src": "/dashboard", "dest": "/dashboard/index.html" }
+    { "src": "/avatar/?", "dest": "/avatar/index.html" },
+    { "src": "/dashboard/?", "dest": "/dashboard/index.html" },
+    { "src": "/lobster-head/?", "dest": "/lobster-head/index.html" },
+    { "src": "/voice-samples/?", "dest": "/voice-samples/index.html" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
