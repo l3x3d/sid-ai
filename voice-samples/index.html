@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SID Voice Samples</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #0a0a0a; 
+      color: #fff; 
+      font-family: 'Courier New', monospace;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    h1 { color: #ff4444; margin-bottom: 30px; }
+    .sample {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      max-width: 600px;
+    }
+    .sample:hover { border-color: #ff4444; }
+    h3 { color: #ff6666; margin-bottom: 10px; }
+    p { color: #888; margin-bottom: 15px; font-size: 14px; }
+    audio { width: 100%; }
+    .pick { 
+      background: #ff4444; 
+      color: white; 
+      border: none; 
+      padding: 10px 20px; 
+      border-radius: 5px; 
+      cursor: pointer; 
+      margin-top: 10px;
+      font-family: inherit;
+    }
+    .pick:hover { background: #ff6666; }
+    .script { 
+      background: #222; 
+      padding: 10px; 
+      border-radius: 5px; 
+      margin: 20px 0;
+      font-style: italic;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>🦞 SID Voice Samples</h1>
+  
+  <div class="script">
+    "Yo dude, SID here. Riding the blockchain waves, catching those pumps. Let's get it bro!"
+  </div>
+  
+  <div class="sample">
+    <h3>🏄 Will - Relaxed Optimist</h3>
+    <p>Young, chill, American. Labeled "chill" by ElevenLabs. Best surfer match.</p>
+    <audio controls src="will-chill.mp3"></audio>
+    <br><button class="pick" onclick="alert('Voice ID: bIHbv24MWmeRgasZH58o')">Use This Voice</button>
+  </div>
+  
+  <div class="sample">
+    <h3>🇦🇺 Charlie - Deep, Confident, Energetic</h3>
+    <p>Australian, hyped energy. Surfer-adjacent vibes.</p>
+    <audio controls src="charlie-aussie.mp3"></audio>
+    <br><button class="pick" onclick="alert('Voice ID: IKne3meq5aSn9XLyUdCD')">Use This Voice</button>
+  </div>
+  
+  <div class="sample">
+    <h3>😎 Roger - Laid-Back, Casual</h3>
+    <p>Middle-aged, laid-back American. More chill dad energy.</p>
+    <audio controls src="roger-laidback.mp3"></audio>
+    <br><button class="pick" onclick="alert('Voice ID: CwhRBWXzGAHq8TQ4Fs17')">Use This Voice</button>
+  </div>
+</body>
+</html>
