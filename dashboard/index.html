@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SID - AI Trading Streamer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 300px 1fr 350px;
+      grid-template-rows: auto 1fr auto;
+      gap: 20px;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .logo h1 {
+      font-size: 28px;
+      background: linear-gradient(90deg, #00ff88, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .status-badge {
+      background: #00ff88;
+      color: #000;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .header-stats {
+      display: flex;
+      gap: 30px;
+    }
+    
+    .stat {
+      text-align: right;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+    }
+    
+    .stat-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00ff88;
+    }
+    
+    .stat-value.negative { color: #ff4444; }
+    
+    /* Panels */
+    .panel {
+      background: rgba(30, 30, 45, 0.8);
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
+    }
+    
+    .panel-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+    }
+    
+    /* Avatar Panel */
+    .avatar-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .avatar-container {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
+      border: 3px solid #00ff88;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .avatar-face {
+      font-size: 80px;
+    }
+    
+    .avatar-glow {
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,255,136,0.3) 0%, transparent 70%);
+      animation: glow 3s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    
+    .emotion-display {
+      font-size: 24px;
+      padding: 8px 20px;
+      background: rgba(0,255,136,0.1);
+      border: 1px solid #00ff88;
+      border-radius: 20px;
+    }
+    
+    .voice-controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .voice-controls button {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .voice-controls button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0,255,136,0.4);
+    }
+    
+    .voice-controls button.secondary {
+      background: transparent;
+      border: 1px solid #00ff88;
+      color: #00ff88;
+    }
+    
+    /* Main Content - Chat & Speech */
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    .speech-bubble {
+      background: linear-gradient(135deg, #2a2a4e, #1a1a2e);
+      border: 2px solid #00ff88;
+      border-radius: 20px;
+      padding: 25px;
+      position: relative;
+      min-height: 120px;
+    }
+    
+    .speech-bubble::before {
+      content: '🎙️ SID SAYS';
+      position: absolute;
+      top: -12px;
+      left: 25px;
+      background: #00ff88;
+      color: #000;
+      padding: 3px 12px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    
+    .speech-text {
+      font-size: 20px;
+      line-height: 1.5;
+      color: #fff;
+    }
+    
+    .speech-text.speaking {
+      animation: typing 0.1s infinite;
+    }
+    
+    @keyframes typing {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+    
+    /* Chat Input */
+    .chat-input-container {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .chat-input {
+      flex: 1;
+      background: rgba(20, 20, 35, 0.8);
+      border: 1px solid #444;
+      border-radius: 12px;
+      padding: 15px 20px;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    
+    .chat-input:focus {
+      border-color: #00ff88;
+    }
+    
+    .chat-input::placeholder {
+      color: #666;
+    }
+    
+    .send-btn {
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Feed Panel */
+    .feed {
+      height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .feed-item {
+      padding: 12px;
+      background: rgba(20, 20, 35, 0.6);
+      border-radius: 8px;
+      border-left: 3px solid #00ff88;
+    }
+    
+    .feed-item.sell {
+      border-left-color: #ff4444;
+    }
+    
+    .feed-item .time {
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .feed-item .content {
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    
+    /* Market Panel */
+    .market-panel {
+      grid-column: 3;
+      grid-row: 2;
+    }
+    
+    .token-card {
+      background: rgba(20, 20, 35, 0.8);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+    
+    .token-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .token-symbol {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .token-price {
+      text-align: right;
+    }
+    
+    .token-mcap {
+      font-size: 20px;
+      color: #00ff88;
+    }
+    
+    .token-change {
+      font-size: 14px;
+    }
+    
+    .token-change.positive { color: #00ff88; }
+    .token-change.negative { color: #ff4444; }
+    
+    .token-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .token-stat {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .token-stat-value {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .token-stat-label {
+      font-size: 11px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    /* Trade Buttons */
+    .trade-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .trade-btn {
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .trade-btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .trade-btn.buy {
+      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      color: #000;
+    }
+    
+    .trade-btn.sell {
+      background: linear-gradient(135deg, #ff4444, #cc0000);
+      color: #fff;
+    }
+    
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .quick-btn {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid #444;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .quick-btn:hover {
+      background: rgba(0,255,136,0.2);
+      border-color: #00ff88;
+    }
+    
+    /* Footer */
+    footer {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-top: 1px solid #333;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #444;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00ff88;
+    }
+
+    /* Audio visualizer */
+    .audio-visualizer {
+      display: flex;
+      gap: 3px;
+      align-items: flex-end;
+      height: 30px;
+      margin-top: 10px;
+    }
+    
+    .audio-bar {
+      width: 4px;
+      background: #00ff88;
+      border-radius: 2px;
+      transition: height 0.1s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <h1>🤖 SID</h1>
+        <span class="status-badge" id="status">● LIVE</span>
+      </div>
+      <div class="header-stats">
+        <div class="stat">
+          <div class="stat-label">Wallet</div>
+          <div class="stat-value" id="wallet-balance">0.489 SOL</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Session P&L</div>
+          <div class="stat-value negative" id="session-pnl">-$14</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Viewers</div>
+          <div class="stat-value" id="viewers">--</div>
+        </div>
+      </div>
+    </header>
+    
+    <!-- Left Panel - Avatar -->
+    <div class="panel avatar-panel">
+      <div class="avatar-container">
+        <div class="avatar-glow"></div>
+        <div class="avatar-face" id="avatar-face">😎</div>
+      </div>
+      <div class="emotion-display" id="emotion">NEUTRAL</div>
+      
+      <div class="audio-visualizer" id="visualizer">
+        <div class="audio-bar" style="height: 10px;"></div>
+        <div class="audio-bar" style="height: 15px;"></div>
+        <div class="audio-bar" style="height: 8px;"></div>
+        <div class="audio-bar" style="height: 20px;"></div>
+        <div class="audio-bar" style="height: 12px;"></div>
+        <div class="audio-bar" style="height: 18px;"></div>
+        <div class="audio-bar" style="height: 10px;"></div>
+        <div class="audio-bar" style="height: 14px;"></div>
+      </div>
+      
+      <div class="voice-controls">
+        <button onclick="speak()">🎤 Speak</button>
+        <button class="secondary" onclick="randomComment()">💬 Random</button>
+      </div>
+      
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="sidSay('bullish')">🚀 Bullish</button>
+        <button class="quick-btn" onclick="sidSay('bearish')">📉 Bearish</button>
+        <button class="quick-btn" onclick="sidSay('rug')">⚠️ Rug Alert</button>
+        <button class="quick-btn" onclick="sidSay('gm')">☀️ GM</button>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="speech-bubble">
+        <div class="speech-text" id="speech-text">
+          Yo what's up! Sid here, ready to call some plays. Let's see what the degens are cooking today.
+        </div>
+      </div>
+      
+      <div class="chat-input-container">
+        <input type="text" class="chat-input" id="chat-input" placeholder="Tell Sid what to say..." onkeypress="handleKeyPress(event)">
+        <button class="send-btn" onclick="speak()">Send</button>
+      </div>
+      
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">📊 Live Feed</span>
+          <span id="feed-count">0 events</span>
+        </div>
+        <div class="feed" id="feed">
+          <div class="feed-item">
+            <div class="time">Just now</div>
+            <div class="content">🟢 Sid is online and watching the markets...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Panel - Market -->
+    <div class="panel market-panel">
+      <div class="panel-header">
+        <span class="panel-title">📈 Watching</span>
+        <button class="quick-btn" onclick="refreshToken()">↻ Refresh</button>
+      </div>
+      
+      <div class="token-card">
+        <div class="token-header">
+          <span class="token-symbol" id="token-symbol">$PHIL</span>
+          <div class="token-price">
+            <div class="token-mcap" id="token-mcap">$38k</div>
+            <div class="token-change negative" id="token-change">-34.5%</div>
+          </div>
+        </div>
+        <div class="token-stats">
+          <div class="token-stat">
+            <div class="token-stat-value" id="token-5m">-25%</div>
+            <div class="token-stat-label">5 MIN</div>
+          </div>
+          <div class="token-stat">
+            <div class="token-stat-value" id="token-1h">-34%</div>
+            <div class="token-stat-label">1 HOUR</div>
+          </div>
+          <div class="token-stat">
+            <div class="token-stat-value" id="token-vol">$349k</div>
+            <div class="token-stat-label">VOLUME</div>
+          </div>
+          <div class="token-stat">
+            <div class="token-stat-value" id="token-buys">48%</div>
+            <div class="token-stat-label">BUYS</div>
+          </div>
+        </div>
+        <div class="trade-buttons">
+          <button class="trade-btn buy" onclick="buyToken()">BUY 0.1 SOL</button>
+          <button class="trade-btn sell" onclick="sellToken()">SELL ALL</button>
+        </div>
+      </div>
+      
+      <div class="panel-header">
+        <span class="panel-title">⚡ Quick Commands</span>
+      </div>
+      <div class="quick-actions" style="margin-top: 10px;">
+        <button class="quick-btn" onclick="command('analyze')">🔍 Analyze</button>
+        <button class="quick-btn" onclick="command('scan')">📡 Scan New</button>
+        <button class="quick-btn" onclick="command('pnl')">💰 Show P&L</button>
+        <button class="quick-btn" onclick="command('positions')">📊 Positions</button>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+      <div>SID v1.0 • Powered by OpenClaw</div>
+      <div>
+        <span id="connection-status">🟢 Connected</span> • 
+        <span id="last-update">Updated just now</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const SID_URL = window.location.origin;
+    const AUTH_TOKEN = 'sid2026'; // Match server token
+    let eventSource = null;
+    
+    // Emotions mapping
+    const emotions = {
+      neutral: { face: '😎', text: 'NEUTRAL' },
+      bullish: { face: '🚀', text: 'BULLISH' },
+      bearish: { face: '😬', text: 'BEARISH' },
+      laughing: { face: '😂', text: 'AMUSED' },
+      skeptical: { face: '🤨', text: 'SKEPTICAL' },
+      shocked: { face: '😱', text: 'SHOCKED' }
+    };
+    
+    // Connect to SSE
+    function connectSSE() {
+      eventSource = new EventSource(`${SID_URL}/events?token=${AUTH_TOKEN}`);
+      
+      eventSource.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        handleEvent(data);
+      };
+      
+      eventSource.onerror = () => {
+        document.getElementById('connection-status').textContent = '🔴 Disconnected';
+        setTimeout(connectSSE, 5000);
+      };
+      
+      eventSource.onopen = () => {
+        document.getElementById('connection-status').textContent = '🟢 Connected';
+      };
+    }
+    
+    function handleEvent(data) {
+      if (data.type === 'speak') {
+        setSpeech(data.text);
+        if (data.emotion) setEmotion(data.emotion);
+        animateSpeaking();
+      }
+      if (data.type === 'emotion') {
+        setEmotion(data.emotion);
+      }
+      if (data.type === 'trade') {
+        addFeedItem(data);
+      }
+    }
+    
+    function setSpeech(text) {
+      document.getElementById('speech-text').textContent = text;
+    }
+    
+    function setEmotion(emotion) {
+      const e = emotions[emotion] || emotions.neutral;
+      document.getElementById('avatar-face').textContent = e.face;
+      document.getElementById('emotion').textContent = e.text;
+    }
+    
+    function animateSpeaking() {
+      const bars = document.querySelectorAll('.audio-bar');
+      const duration = 3000;
+      const interval = setInterval(() => {
+        bars.forEach(bar => {
+          bar.style.height = (5 + Math.random() * 25) + 'px';
+        });
+      }, 100);
+      
+      setTimeout(() => {
+        clearInterval(interval);
+        bars.forEach(bar => bar.style.height = '10px');
+      }, duration);
+    }
+    
+    function addFeedItem(data) {
+      const feed = document.getElementById('feed');
+      const item = document.createElement('div');
+      item.className = `feed-item ${data.type || ''}`;
+      item.innerHTML = `
+        <div class="time">${new Date().toLocaleTimeString()}</div>
+        <div class="content">${data.content || data.text}</div>
+      `;
+      feed.insertBefore(item, feed.firstChild);
+      
+      // Keep only last 50 items
+      while (feed.children.length > 50) {
+        feed.removeChild(feed.lastChild);
+      }
+      
+      document.getElementById('feed-count').textContent = `${feed.children.length} events`;
+    }
+    
+    // Actions
+    async function speak() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      try {
+        await fetch(`${SID_URL}/speak?token=${AUTH_TOKEN}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, emotion: 'neutral' })
+        });
+        input.value = '';
+        setSpeech(text);
+        animateSpeaking();
+      } catch (e) {
+        console.error('Speak failed:', e);
+      }
+    }
+    
+    function handleKeyPress(e) {
+      if (e.key === 'Enter') speak();
+    }
+    
+    const quickPhrases = {
+      bullish: "Chart's looking spicy! This could have legs.",
+      bearish: "Oof, not looking good. Might want to take profits if you're in.",
+      rug: "Hold up - this is giving me rug vibes. Check that dev wallet before you ape.",
+      gm: "GM degens! Another day, another opportunity to lose money. Let's get it!"
+    };
+    
+    async function sidSay(type) {
+      const text = quickPhrases[type];
+      try {
+        await fetch(`${SID_URL}/speak`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, emotion: type === 'bullish' ? 'bullish' : type === 'bearish' ? 'bearish' : type === 'rug' ? 'skeptical' : 'neutral' })
+        });
+        setSpeech(text);
+        setEmotion(type === 'bullish' ? 'bullish' : type === 'bearish' ? 'bearish' : 'neutral');
+        animateSpeaking();
+      } catch (e) {
+        console.error('Speak failed:', e);
+      }
+    }
+    
+    async function randomComment() {
+      const comments = [
+        { text: "Volume's picking up. Someone knows something or someone's gambling.", emotion: 'skeptical' },
+        { text: "This is either the bottom or just the beginning of the dump. Choose wisely.", emotion: 'neutral' },
+        { text: "Chart pattern looking like my portfolio - chaotic and unpredictable.", emotion: 'laughing' },
+        { text: "Remember folks, we're all just gambling with extra steps.", emotion: 'neutral' },
+        { text: "Dev wallet hasn't moved. Either diamond hands or asleep at the wheel.", emotion: 'skeptical' }
+      ];
+      const c = comments[Math.floor(Math.random() * comments.length)];
+      
+      try {
+        await fetch(`${SID_URL}/speak`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(c)
+        });
+        setSpeech(c.text);
+        setEmotion(c.emotion);
+        animateSpeaking();
+      } catch (e) {}
+    }
+    
+    async function refreshToken() {
+      try {
+        const resp = await fetch(`${SID_URL}/status?token=${AUTH_TOKEN}`);
+        const data = await resp.json();
+        if (data.token) {
+          document.getElementById('token-symbol').textContent = `$${data.token.symbol}`;
+          document.getElementById('token-mcap').textContent = `$${(data.token.mcap/1000).toFixed(0)}k`;
+        }
+        document.getElementById('last-update').textContent = 'Updated just now';
+      } catch (e) {
+        console.error('Refresh failed:', e);
+      }
+    }
+    
+    function buyToken() {
+      addFeedItem({ type: 'buy', content: '🟢 Buy order submitted...' });
+      // TODO: Connect to actual buy endpoint
+    }
+    
+    function sellToken() {
+      addFeedItem({ type: 'sell', content: '🔴 Sell order submitted...' });
+      // TODO: Connect to actual sell endpoint
+    }
+    
+    function command(cmd) {
+      addFeedItem({ content: `⚡ Command: ${cmd}` });
+      // TODO: Connect to command handler
+    }
+    
+    // Initialize
+    connectSSE();
+    refreshToken();
+    setInterval(refreshToken, 30000);
+    
+    // Fetch initial token data
+    async function fetchTokenData() {
+      try {
+        const resp = await fetch('https://api.dexscreener.com/tokens/v1/solana/DapsZMWnySYgexnmF75yq4XKaH8RBF2YeWtRvtD8pump');
+        const data = await resp.json();
+        if (data[0]) {
+          const p = data[0];
+          document.getElementById('token-mcap').textContent = `$${(p.marketCap/1000).toFixed(0)}k`;
+          
+          const change5m = p.priceChange?.m5 || 0;
+          const change1h = p.priceChange?.h1 || 0;
+          
+          document.getElementById('token-5m').textContent = `${change5m >= 0 ? '+' : ''}${change5m.toFixed(0)}%`;
+          document.getElementById('token-5m').className = `token-stat-value ${change5m >= 0 ? 'positive' : 'negative'}`;
+          
+          document.getElementById('token-1h').textContent = `${change1h >= 0 ? '+' : ''}${change1h.toFixed(0)}%`;
+          document.getElementById('token-1h').className = `token-stat-value ${change1h >= 0 ? 'positive' : 'negative'}`;
+          
+          document.getElementById('token-change').textContent = `${change1h >= 0 ? '+' : ''}${change1h.toFixed(1)}%`;
+          document.getElementById('token-change').className = `token-change ${change1h >= 0 ? 'positive' : 'negative'}`;
+          
+          document.getElementById('token-vol').textContent = `$${(p.volume?.h24/1000).toFixed(0)}k`;
+          
+          const buys = p.txns?.m5?.buys || 0;
+          const sells = p.txns?.m5?.sells || 0;
+          const buyRatio = buys / (buys + sells) * 100;
+          document.getElementById('token-buys').textContent = `${buyRatio.toFixed(0)}%`;
+        }
+      } catch (e) {}
+    }
+    
+    fetchTokenData();
+    setInterval(fetchTokenData, 15000);
+  </script>
+</body>
+</html>

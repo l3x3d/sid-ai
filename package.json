@@ -1,0 +1,22 @@
+{
+  "name": "sid-ai",
+  "version": "1.0.0",
+  "description": "AI Trading Streamer with voice and avatar",
+  "main": "sid-openclaw.ts",
+  "scripts": {
+    "start": "npx tsx sid-openclaw.ts",
+    "dev": "npx tsx watch sid-openclaw.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@solana/web3.js": "^1.98.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.5.13",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
