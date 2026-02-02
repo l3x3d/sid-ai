@@ -5,8 +5,7 @@
   "main": "sid-openclaw.ts",
   "scripts": {
     "start": "npx tsx sid-openclaw.ts",
-    "dev": "npx tsx watch sid-openclaw.ts",
-    "build": "tsc"
+    "dev": "npx tsx watch sid-openclaw.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
