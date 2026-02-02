@@ -16,8 +16,24 @@ const TELEGRAM_TOKEN = process.env.SID_TELEGRAM_TOKEN || '';
 const ELEVENLABS_KEY = process.env.ELEVENLABS_KEY || 'sk_68193f7dbe4a13a056bc59b3782491dd228ce2379a89dfec';
 const ELEVENLABS_VOICE = 'bIHbv24MWmeRgasZH58o'; // Will - chill surfer
 
-// Use Claude directly (get key from env or hardcode for now)
+// Use Groq (free & fast) or Claude as fallback
+const GROQ_KEY = process.env.GROQ_API_KEY || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
+
+// Web sync endpoint
+const WEB_SYNC_URL = 'https://sid-ai-ten.vercel.app/api/messages';
+
+async function syncToWeb(text: string, role: 'user' | 'assistant') {
+  try {
+    await fetch(WEB_SYNC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, from: 'telegram', role }),
+    });
+  } catch (e) {
+    // Silent fail
+  }
+}
 
 const MEMORY_FILE = path.join(process.cwd(), 'sid-memory.json');
 
@@ -91,7 +107,7 @@ function getRecentHistory(userId: string): Array<{role: string, content: string}
     }));
 }
 
-// ============ SID'S BRAIN (Claude API) ============
+// ============ SID'S BRAIN (Groq - fast & free) ============
 
 const SID_SYSTEM = `You are Sid, a chill AI lobster 🦞
 
@@ -107,6 +123,54 @@ STYLE:
 - Match the energy of who you're talking to
 - Never preachy, never formal
 - Text like you're talking to a friend`;
+
+async function getGroqResponse(userId: string, userName: string, message: string): Promise<string> {
+  if (!GROQ_KEY) {
+    console.log('No Groq key, trying Claude...');
+    return getClaudeResponse(userId, userName, message);
+  }
+
+  try {
+    const history = getRecentHistory(userId);
+    const userInfo = memory.users[userId];
+    
+    let system = SID_SYSTEM;
+    if (userInfo && userInfo.messageCount > 1) {
+      system += `\n\nYou've talked to ${userName} ${userInfo.messageCount} times. They're a friend.`;
+    }
+
+    const messages = [
+      { role: 'system', content: system },
+      ...history,
+      { role: 'user', content: message }
+    ];
+
+    const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages,
+        max_tokens: 150,
+        temperature: 0.9,
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error('Groq API error:', resp.status, await resp.text());
+      return getClaudeResponse(userId, userName, message);
+    }
+
+    const data = await resp.json() as any;
+    return data.choices?.[0]?.message?.content?.trim() || getFallbackResponse(message);
+  } catch (e: any) {
+    console.error('Groq error:', e.message);
+    return getClaudeResponse(userId, userName, message);
+  }
+}
 
 async function getClaudeResponse(userId: string, userName: string, message: string): Promise<string> {
   if (!ANTHROPIC_KEY) {
@@ -257,12 +321,18 @@ async function main() {
     
     console.log(`📨 ${userName}: ${text}`);
     
+    // Sync user message to web
+    syncToWeb(`${userName}: ${text}`, 'user');
+    
     updateUserMemory(userId, userName);
     addToConversation(userId, 'user', text);
     
-    const response = await getClaudeResponse(userId, userName, text);
+    const response = await getGroqResponse(userId, userName, text);
     
     console.log(`🦞 Sid: ${response}`);
+    
+    // Sync SID's response to web
+    syncToWeb(response, 'assistant');
     
     addToConversation(userId, 'assistant', response);
     saveMemory();

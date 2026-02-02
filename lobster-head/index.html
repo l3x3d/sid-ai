@@ -14,12 +14,7 @@
       display: flex;
     }
     
-    /* Left side - Lobster */
-    #lobster-section {
-      flex: 1;
-      position: relative;
-      min-width: 400px;
-    }
+    #lobster-section { flex: 1; position: relative; min-width: 400px; }
     #canvas { display: block; width: 100%; height: 100%; }
     
     #speech-box {
@@ -37,22 +32,14 @@
     #waveform-container.active { display: block; }
     #waveform { width: 100%; height: 100%; }
     
-    /* Right side - Terminal */
     #terminal-section {
-      width: 50%;
-      max-width: 700px;
-      display: flex;
-      flex-direction: column;
-      background: #0d0d0d;
-      border-left: 1px solid #333;
+      width: 50%; max-width: 700px; display: flex; flex-direction: column;
+      background: #0d0d0d; border-left: 1px solid #333;
     }
     
     #terminal-header {
       background: linear-gradient(135deg, #1a1a2e, #16213e);
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 12px;
       border-bottom: 1px solid #333;
     }
     #terminal-header .dots { display: flex; gap: 6px; }
@@ -61,45 +48,20 @@
     #terminal-header .dot.yellow { background: #ffbd2e; }
     #terminal-header .dot.green { background: #27ca40; }
     #terminal-header .title { flex: 1; color: #888; font-size: 13px; text-align: center; }
-    #terminal-header .status { color: #27ca40; font-size: 12px; display: flex; align-items: center; gap: 5px; }
-    #terminal-header .status::before { content: ''; width: 6px; height: 6px; background: #27ca40; border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    #terminal-header .status { color: #27ca40; font-size: 12px; }
     
-    #terminal-tabs {
-      display: flex;
-      background: #111;
-      border-bottom: 1px solid #333;
-    }
-    .terminal-tab {
-      padding: 10px 20px;
-      color: #666;
-      font-size: 13px;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
+    #terminal-tabs { display: flex; background: #111; border-bottom: 1px solid #333; }
+    .terminal-tab { padding: 10px 20px; color: #666; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; }
     .terminal-tab:hover { color: #aaa; }
     .terminal-tab.active { color: #fff; border-bottom-color: #27ca40; background: #1a1a1a; }
     
-    #terminal-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    #terminal-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     
     #terminal-output {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 13px;
-      line-height: 1.5;
-      color: #0f0;
-      background: #0a0a0a;
+      flex: 1; padding: 15px; overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; line-height: 1.5;
+      color: #0f0; background: #0a0a0a;
     }
-    #terminal-output::-webkit-scrollbar { width: 8px; }
-    #terminal-output::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
     
     .term-line { margin: 2px 0; white-space: pre-wrap; word-break: break-all; }
     .term-line.input { color: #0ff; }
@@ -110,39 +72,24 @@
     .term-line.sid { color: #ff6b4a; }
     
     #terminal-input-area {
-      display: flex;
-      align-items: center;
-      padding: 12px 15px;
-      background: #111;
-      border-top: 1px solid #333;
-      gap: 10px;
+      display: flex; align-items: center; padding: 12px 15px;
+      background: #111; border-top: 1px solid #333; gap: 10px;
     }
     #terminal-prompt { color: #27ca40; font-family: monospace; }
     #terminal-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-family: 'Monaco', 'Menlo', monospace;
-      font-size: 14px;
-      outline: none;
+      flex: 1; background: transparent; border: none; color: #fff;
+      font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; outline: none;
     }
     
-    /* Preview iframe */
-    #preview-container {
-      display: none;
-      flex: 1;
-      background: #fff;
-    }
+    #preview-container { display: none; flex: 1; background: #fff; }
     #preview-container.active { display: block; }
     #preview-frame { width: 100%; height: 100%; border: none; }
     
-    /* Chat toggle */
     #chat-toggle {
       position: fixed; bottom: 20px; left: 20px; width: 65px; height: 65px;
       background: linear-gradient(135deg, #ff6b4a, #ff8866); border: none; border-radius: 50%;
       cursor: pointer; font-size: 32px; color: white; box-shadow: 0 4px 20px rgba(255,107,74,0.5);
-      transition: all 0.3s; z-index: 1000;
+      z-index: 1000;
     }
     #chat-toggle:hover { transform: scale(1.1); }
     #chat-toggle.open { background: linear-gradient(135deg, #444, #666); }
@@ -180,56 +127,36 @@
     
     #audio-player { display: none; }
     
-    /* Loading overlay */
     #loading-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(10, 21, 32, 0.95);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      transition: opacity 0.5s;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 21, 32, 0.95); display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 2000;
     }
     #loading-overlay.hidden { opacity: 0; pointer-events: none; }
     #loading-text { color: #fff; font-size: 18px; margin-top: 20px; }
     #loading-sub { color: #888; font-size: 14px; margin-top: 8px; }
-    .loader {
-      width: 60px; height: 60px;
-      border: 4px solid #333;
-      border-top-color: #27ca40;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
+    .loader { width: 60px; height: 60px; border: 4px solid #333; border-top-color: #27ca40; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <!-- Loading overlay -->
   <div id="loading-overlay">
     <div class="loader"></div>
     <div id="loading-text">🦞 Booting SID's workspace...</div>
     <div id="loading-sub">Starting WebContainer</div>
   </div>
 
-  <!-- Lobster section -->
   <div id="lobster-section">
     <canvas id="canvas"></canvas>
     <div id="speech-box"></div>
     <div id="waveform-container"><canvas id="waveform"></canvas></div>
   </div>
   
-  <!-- Terminal section -->
   <div id="terminal-section">
     <div id="terminal-header">
-      <div class="dots">
-        <div class="dot red"></div>
-        <div class="dot yellow"></div>
-        <div class="dot green"></div>
-      </div>
+      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
       <div class="title">SID's Workspace</div>
-      <div class="status">WebContainer</div>
+      <div class="status">● WebContainer</div>
     </div>
     <div id="terminal-tabs">
       <div class="terminal-tab active" data-tab="terminal">Terminal</div>
@@ -269,9 +196,7 @@
     let chatOpen = false, isSpeaking = false, speakingTime = 0;
     let audioContext, analyser, dataArray;
     let webcontainer = null;
-    let currentProcess = null;
     
-    // ============ WEBCONTAINER ============
     const termOutput = document.getElementById('terminal-output');
     const termInput = document.getElementById('terminal-input');
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -281,7 +206,7 @@
     
     function termLog(text, type = 'output') {
       const line = document.createElement('div');
-      line.className = `term-line ${type}`;
+      line.className = 'term-line ' + type;
       line.textContent = text;
       termOutput.appendChild(line);
       termOutput.scrollTop = termOutput.scrollHeight;
@@ -302,13 +227,12 @@
             }, null, 2) }
           },
           'index.js': {
-            file: { contents: '// SID\\'s workspace - ready to build!\\nconsole.log("🦞 SID workspace ready!");\\n' }
+            file: { contents: '// SID workspace ready!\nconsole.log("Hello from SID!");\n' }
           }
         });
         
-        // Listen for server-ready events
         webcontainer.on('server-ready', (port, url) => {
-          termLog(`🌐 Server ready at ${url}`, 'success');
+          termLog('Server ready at ' + url, 'success');
           previewFrame.src = url;
         });
         
@@ -317,63 +241,80 @@
         
         termLog('🦞 SID WebContainer ready!', 'sid');
         termLog('Type commands or ask me to build something.', 'info');
-        termLog('', 'info');
         
       } catch (e) {
         console.error('WebContainer boot failed:', e);
-        loadingSub.textContent = 'Failed to boot - ' + e.message;
-        termLog('❌ WebContainer failed: ' + e.message, 'error');
+        loadingSub.textContent = 'Failed - ' + e.message;
+        termLog('WebContainer failed: ' + e.message, 'error');
       }
     }
     
     async function runCommand(cmd) {
-      if (!webcontainer) {
-        termLog('WebContainer not ready', 'error');
-        return;
-      }
+      if (!webcontainer) { termLog('WebContainer not ready', 'error'); return; }
       
-      termLog(`$ ${cmd}`, 'input');
-      
+      termLog('$ ' + cmd, 'input');
       const parts = cmd.split(' ');
-      const command = parts[0];
-      const args = parts.slice(1);
       
       try {
-        const process = await webcontainer.spawn(command, args);
-        currentProcess = process;
-        
+        const process = await webcontainer.spawn(parts[0], parts.slice(1));
         process.output.pipeTo(new WritableStream({
           write(data) { 
-            data.split('\\n').forEach(line => {
-              if (line.trim()) termLog(line, 'output');
-            });
+            data.split('\n').forEach(line => { if (line.trim()) termLog(line, 'output'); });
           }
         }));
-        
         const exitCode = await process.exit;
-        if (exitCode !== 0) {
-          termLog(`Process exited with code ${exitCode}`, 'error');
-        }
-        currentProcess = null;
+        if (exitCode !== 0) termLog('Process exited with code ' + exitCode, 'error');
       } catch (e) {
-        termLog(`Error: ${e.message}`, 'error');
+        termLog('Error: ' + e.message, 'error');
       }
     }
     
     async function writeFile(path, contents) {
       if (!webcontainer) return;
       await webcontainer.fs.writeFile(path, contents);
-      termLog(`📝 Wrote ${path}`, 'success');
+      termLog('Wrote ' + path, 'success');
     }
     
-    // Terminal input handler
+    async function askSidToBuild(request) {
+      termLog('🦞 SID: "' + request + '"... let me cook!', 'sid');
+      
+      try {
+        const resp = await fetch('/api/build', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ request })
+        });
+        
+        const data = await resp.json();
+        
+        if (data.message) {
+          termLog('🦞 ' + data.message, 'sid');
+          showSpeech(data.message);
+        }
+        
+        if (data.files) {
+          for (const [path, contents] of Object.entries(data.files)) {
+            await writeFile(path, contents);
+          }
+        }
+        
+        if (data.commands && data.commands.length > 0) {
+          for (const cmd of data.commands) {
+            await runCommand(cmd);
+          }
+        }
+        
+      } catch (e) {
+        termLog('Error: ' + e.message, 'error');
+      }
+    }
+    
     termInput.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const cmd = termInput.value.trim();
         termInput.value = '';
         if (!cmd) return;
         
-        // Check if it's a build request for SID
         if (cmd.toLowerCase().startsWith('build ') || cmd.toLowerCase().startsWith('create ') || cmd.toLowerCase().startsWith('make ')) {
           await askSidToBuild(cmd);
         } else {
@@ -382,12 +323,10 @@
       }
     });
     
-    // Tab switching
     document.querySelectorAll('.terminal-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        
         const tabName = tab.dataset.tab;
         if (tabName === 'preview') {
           previewContainer.classList.add('active');
@@ -399,47 +338,9 @@
       });
     });
     
-    // Ask SID to build something
-    async function askSidToBuild(request) {
-      termLog(`🦞 SID: "${request}"... let me cook!`, 'sid');
-      
-      try {
-        const resp = await fetch('/api/build', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ request })
-        });
-        
-        const { files, commands, message } = await resp.json();
-        
-        if (message) {
-          termLog(`🦞 ${message}`, 'sid');
-          showSpeech(message);
-        }
-        
-        // Write files
-        if (files) {
-          for (const [path, contents] of Object.entries(files)) {
-            await writeFile(path, contents);
-          }
-        }
-        
-        // Run commands
-        if (commands) {
-          for (const cmd of commands) {
-            await runCommand(cmd);
-          }
-        }
-        
-      } catch (e) {
-        termLog(`🦞 Oops, hit a snag: ${e.message}`, 'error');
-      }
-    }
-    
-    // Boot on load
     bootWebContainer();
     
-    // ============ CHAT ============
+    // Chat toggle
     window.toggleChat = function() {
       chatOpen = !chatOpen;
       document.getElementById('chat-terminal').classList.toggle('open', chatOpen);
@@ -448,7 +349,7 @@
       if (chatOpen) document.getElementById('chat-input').focus();
     };
     
-    // ============ WAVEFORM ============
+    // Waveform
     const waveformContainer = document.getElementById('waveform-container');
     const waveformCanvas = document.getElementById('waveform');
     const waveCtx = waveformCanvas.getContext('2d');
@@ -456,10 +357,7 @@
     waveformCanvas.height = 60;
     
     function drawWaveform() {
-      if (!isSpeaking || !analyser) {
-        waveformContainer.classList.remove('active');
-        return;
-      }
+      if (!isSpeaking || !analyser) { waveformContainer.classList.remove('active'); return; }
       waveformContainer.classList.add('active');
       analyser.getByteFrequencyData(dataArray);
       waveCtx.clearRect(0, 0, 200, 60);
@@ -468,10 +366,7 @@
       for (let i = 0; i < bars; i++) {
         const value = dataArray[Math.floor(i * dataArray.length / bars)] / 255;
         const height = Math.max(4, value * 50);
-        const gradient = waveCtx.createLinearGradient(0, 30 - height/2, 0, 30 + height/2);
-        gradient.addColorStop(0, '#00ff88');
-        gradient.addColorStop(1, '#00ff88');
-        waveCtx.fillStyle = gradient;
+        waveCtx.fillStyle = '#00ff88';
         waveCtx.shadowColor = '#00ff88';
         waveCtx.shadowBlur = 10;
         waveCtx.beginPath();
@@ -481,7 +376,7 @@
       requestAnimationFrame(drawWaveform);
     }
     
-    // ============ THREE.JS LOBSTER ============
+    // THREE.JS
     const canvas = document.getElementById('canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
@@ -599,16 +494,57 @@
     }
     animate();
     
-    // ============ CHAT LOGIC ============
+    // Chat
     const msgBox = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
     const speechBox = document.getElementById('speech-box');
     const audioPlayer = document.getElementById('audio-player');
     
-    function addMsg(text, type) { const div = document.createElement('div'); div.className = `msg ${type}`; div.textContent = text; msgBox.appendChild(div); msgBox.scrollTop = msgBox.scrollHeight; }
-    function showSpeech(text) { speechBox.textContent = text; speechBox.classList.add('visible'); isSpeaking = true; speakingTime = 0; setTimeout(() => { speechBox.classList.remove('visible'); isSpeaking = false; }, 4000); }
-    function hideSpeech() { speechBox.classList.remove('visible'); isSpeaking = false; waveformContainer.classList.remove('active'); }
+    function addMsg(text, type) { 
+      const div = document.createElement('div'); 
+      div.className = 'msg ' + type; 
+      div.textContent = text; 
+      msgBox.appendChild(div); 
+      msgBox.scrollTop = msgBox.scrollHeight; 
+    }
+    
+    function showSpeech(text) { 
+      speechBox.textContent = text; 
+      speechBox.classList.add('visible'); 
+      isSpeaking = true; 
+      speakingTime = 0; 
+      setTimeout(() => { speechBox.classList.remove('visible'); isSpeaking = false; }, 4000); 
+    }
+    
+    function hideSpeech() { 
+      speechBox.classList.remove('visible'); 
+      isSpeaking = false; 
+      waveformContainer.classList.remove('active'); 
+    }
+    
+    // Sync with Telegram - poll for new messages
+    let lastMessageId = null;
+    
+    async function pollMessages() {
+      try {
+        const resp = await fetch('/api/messages?since=' + (lastMessageId || ''));
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+              if (msg.from === 'telegram') {
+                addMsg('[TG] ' + msg.text, msg.role === 'user' ? 'user' : 'sid');
+              }
+              lastMessageId = msg.id;
+            });
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+    
+    // Poll every 3 seconds
+    setInterval(pollMessages, 3000);
     
     async function sendChat() {
       const text = chatInput.value.trim();
@@ -617,18 +553,16 @@
       sendBtn.disabled = true;
       addMsg(text, 'user');
       
-      // Check if it's a build request
       if (text.toLowerCase().includes('build') || text.toLowerCase().includes('create') || text.toLowerCase().includes('make')) {
         addMsg("On it! Check the terminal 👉", 'sid');
         showSpeech("Let me cook something up! 🦞");
         await askSidToBuild(text);
       } else {
-        // Regular chat
         try {
           const resp = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
-          const { reply } = await resp.json();
-          addMsg(reply, 'sid');
-          showSpeech(reply);
+          const data = await resp.json();
+          addMsg(data.reply, 'sid');
+          showSpeech(data.reply);
         } catch {
           addMsg("Oops, brain freeze! 🦞", 'sid');
         }
