@@ -23,6 +23,14 @@
     #speech-box.visible { opacity: 1; }
     #speech-box::after { content: ''; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%); border: 15px solid transparent; border-top-color: #ff6b4a; }
     
+    /* Waveform */
+    #waveform-container {
+      position: absolute; bottom: 35%; left: 50%; transform: translateX(-50%);
+      width: 200px; height: 60px; display: none; z-index: 5;
+    }
+    #waveform-container.active { display: block; }
+    #waveform { width: 100%; height: 100%; }
+    
     #chat-toggle {
       position: fixed; bottom: 20px; right: 20px; width: 65px; height: 65px;
       background: linear-gradient(135deg, #ff6b4a, #ff8866); border: none; border-radius: 50%;
@@ -74,6 +82,12 @@
 <body>
   <canvas id="canvas"></canvas>
   <div id="speech-box"></div>
+  
+  <!-- Waveform visualization -->
+  <div id="waveform-container">
+    <canvas id="waveform"></canvas>
+  </div>
+  
   <audio id="audio-player"></audio>
   <button id="chat-toggle" onclick="toggleChat()">🦞</button>
   <div id="chat-terminal">
@@ -95,6 +109,7 @@
     import * as THREE from 'three';
     
     let chatOpen = false, isSpeaking = false, speakingTime = 0;
+    let audioContext, analyser, dataArray;
     
     window.toggleChat = function() {
       chatOpen = !chatOpen;
@@ -104,6 +119,51 @@
       if (chatOpen) document.getElementById('chat-input').focus();
     };
     
+    // ============ WAVEFORM ============
+    const waveformContainer = document.getElementById('waveform-container');
+    const waveformCanvas = document.getElementById('waveform');
+    const waveCtx = waveformCanvas.getContext('2d');
+    waveformCanvas.width = 200;
+    waveformCanvas.height = 60;
+    
+    function drawWaveform() {
+      if (!isSpeaking || !analyser) {
+        waveformContainer.classList.remove('active');
+        return;
+      }
+      
+      waveformContainer.classList.add('active');
+      analyser.getByteFrequencyData(dataArray);
+      
+      waveCtx.clearRect(0, 0, 200, 60);
+      
+      const bars = 20;
+      const barWidth = 6;
+      const gap = 4;
+      const startX = (200 - (bars * (barWidth + gap))) / 2;
+      
+      for (let i = 0; i < bars; i++) {
+        const dataIndex = Math.floor(i * dataArray.length / bars);
+        const value = dataArray[dataIndex] / 255;
+        const height = Math.max(4, value * 50);
+        
+        const gradient = waveCtx.createLinearGradient(0, 30 - height/2, 0, 30 + height/2);
+        gradient.addColorStop(0, '#00ff88');
+        gradient.addColorStop(0.5, '#00ffaa');
+        gradient.addColorStop(1, '#00ff88');
+        
+        waveCtx.fillStyle = gradient;
+        waveCtx.shadowColor = '#00ff88';
+        waveCtx.shadowBlur = 10;
+        waveCtx.beginPath();
+        waveCtx.roundRect(startX + i * (barWidth + gap), 30 - height/2, barWidth, height, 3);
+        waveCtx.fill();
+      }
+      
+      requestAnimationFrame(drawWaveform);
+    }
+    
+    // ============ THREE.JS ============
     const canvas = document.getElementById('canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -220,6 +280,7 @@
     }
     animate();
     
+    // ============ CHAT ============
     const msgBox = document.getElementById('chat-messages');
     const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
@@ -228,7 +289,45 @@
     
     function addMsg(text, type) { const div = document.createElement('div'); div.className = `msg ${type}`; div.textContent = text; msgBox.appendChild(div); msgBox.scrollTop = msgBox.scrollHeight; }
     function showSpeech(text) { speechBox.textContent = text; speechBox.classList.add('visible'); isSpeaking = true; speakingTime = 0; }
-    function hideSpeech() { speechBox.classList.remove('visible'); isSpeaking = false; }
+    function hideSpeech() { speechBox.classList.remove('visible'); isSpeaking = false; waveformContainer.classList.remove('active'); }
+    
+    async function playVoice(text) {
+      try {
+        const voiceResp = await fetch('/api/voice', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ text }) 
+        });
+        
+        if (!voiceResp.ok) { setTimeout(hideSpeech, 2000); return; }
+        
+        const blob = await voiceResp.blob();
+        const url = URL.createObjectURL(blob);
+        
+        // Setup audio context for visualization
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 64;
+          dataArray = new Uint8Array(analyser.frequencyBinCount);
+        }
+        
+        audioPlayer.src = url;
+        
+        // Connect audio to analyser
+        const source = audioContext.createMediaElementSource(audioPlayer);
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+        
+        audioPlayer.onplay = () => { drawWaveform(); };
+        audioPlayer.onended = () => { hideSpeech(); URL.revokeObjectURL(url); };
+        
+        await audioPlayer.play();
+      } catch (e) {
+        console.error('Voice error:', e);
+        setTimeout(hideSpeech, 2000);
+      }
+    }
     
     async function send() {
       const text = input.value.trim();
@@ -250,16 +349,7 @@
         addMsg(reply, 'sid');
         showSpeech(reply);
         
-        try {
-          const voiceResp = await fetch('/api/voice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: reply }) });
-          if (voiceResp.ok) {
-            const blob = await voiceResp.blob();
-            const url = URL.createObjectURL(blob);
-            audioPlayer.src = url;
-            audioPlayer.onended = () => { hideSpeech(); URL.revokeObjectURL(url); };
-            audioPlayer.play();
-          } else { setTimeout(hideSpeech, 2000); }
-        } catch { setTimeout(hideSpeech, 2000); }
+        await playVoice(reply);
       } catch {
         typing.remove();
         addMsg("Oops, brain freeze! 🦞", 'sid');
