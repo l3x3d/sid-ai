@@ -10,21 +10,18 @@
       background: linear-gradient(135deg, #0a0a0a 0%, #1a0a0a 50%, #0a0a0a 100%);
       font-family: 'Courier New', monospace;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    /* Lobster container - top half */
-    #lobster-container {
-      flex: 0 0 50vh;
-      position: relative;
       overflow: hidden;
     }
-    #canvas { display: block; width: 100%; height: 100%; }
+    
+    #canvas { 
+      display: block; 
+      width: 100%; 
+      height: 100%; 
+    }
     
     #speech-box {
       position: absolute;
-      top: 10px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.9);
@@ -41,87 +38,150 @@
     }
     #speech-box.visible { opacity: 1; }
     
-    /* Chat container - bottom half */
-    #chat-container {
-      flex: 1;
+    /* Chat Terminal Overlay */
+    #chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #cc2200, #ff4444);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 28px;
+      color: white;
+      box-shadow: 0 4px 20px rgba(255,68,68,0.4);
+      transition: all 0.3s;
+      z-index: 1000;
       display: flex;
-      flex-direction: column;
-      background: #111;
-      border-top: 2px solid #ff4444;
+      align-items: center;
+      justify-content: center;
     }
+    #chat-toggle:hover { 
+      transform: scale(1.1); 
+      box-shadow: 0 6px 30px rgba(255,68,68,0.6);
+    }
+    #chat-toggle.open { background: #333; }
+    
+    #chat-terminal {
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      width: 380px;
+      height: 450px;
+      background: rgba(10, 10, 10, 0.95);
+      border: 1px solid #ff4444;
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      z-index: 999;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+    #chat-terminal.open { display: flex; }
+    
+    #chat-header {
+      background: linear-gradient(135deg, #cc2200, #991100);
+      padding: 12px 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #ff4444;
+    }
+    #chat-header .title {
+      flex: 1;
+      font-weight: bold;
+      color: #fff;
+      font-size: 14px;
+    }
+    #chat-header .status {
+      font-size: 10px;
+      color: #88ff88;
+    }
+    #chat-header .close-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    #chat-header .close-btn:hover { opacity: 1; }
     
     #chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 15px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      font-size: 13px;
     }
     
-    .message {
-      max-width: 80%;
-      padding: 10px 15px;
-      border-radius: 15px;
-      font-size: 14px;
+    #chat-messages::-webkit-scrollbar { width: 6px; }
+    #chat-messages::-webkit-scrollbar-track { background: #111; }
+    #chat-messages::-webkit-scrollbar-thumb { background: #ff4444; border-radius: 3px; }
+    
+    .msg {
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 12px;
       line-height: 1.4;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.2s ease;
     }
     
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    .message.user {
-      background: #333;
+    .msg.user {
+      background: #2a2a2a;
       color: #fff;
       align-self: flex-end;
-      border-bottom-right-radius: 5px;
+      border-bottom-right-radius: 4px;
     }
     
-    .message.sid {
-      background: linear-gradient(135deg, #cc2200, #ff4444);
+    .msg.sid {
+      background: linear-gradient(135deg, #cc2200, #aa1100);
       color: #fff;
       align-self: flex-start;
-      border-bottom-left-radius: 5px;
+      border-bottom-left-radius: 4px;
     }
     
-    .message.sid .name {
-      font-weight: bold;
-      margin-bottom: 4px;
-      font-size: 12px;
-      opacity: 0.8;
+    .msg.system {
+      background: transparent;
+      color: #666;
+      font-size: 11px;
+      text-align: center;
+      align-self: center;
     }
     
-    .message.typing {
-      background: #222;
-      color: #888;
-    }
-    
-    .typing-dots {
-      display: inline-flex;
+    .typing {
+      display: flex;
       gap: 4px;
+      padding: 8px 12px;
     }
-    .typing-dots span {
+    .typing span {
       width: 6px;
       height: 6px;
       background: #888;
       border-radius: 50%;
       animation: bounce 1.4s ease-in-out infinite;
     }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
     
     @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
+      30% { transform: translateY(-5px); }
     }
     
-    #chat-input-container {
+    #chat-input-area {
       display: flex;
-      gap: 10px;
-      padding: 15px;
+      gap: 8px;
+      padding: 12px;
       background: #0a0a0a;
       border-top: 1px solid #222;
     }
@@ -130,212 +190,182 @@
       flex: 1;
       background: #1a1a1a;
       border: 1px solid #333;
-      border-radius: 25px;
-      padding: 12px 20px;
+      border-radius: 20px;
+      padding: 10px 15px;
       color: #fff;
       font-family: inherit;
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
-      transition: border-color 0.2s;
     }
     #chat-input:focus { border-color: #ff4444; }
-    #chat-input::placeholder { color: #666; }
+    #chat-input::placeholder { color: #555; }
     
     #send-btn {
       background: #ff4444;
       border: none;
       color: white;
-      width: 50px;
-      height: 50px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 20px;
+      font-size: 16px;
       transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
-    #send-btn:hover { background: #ff6666; transform: scale(1.05); }
-    #send-btn:disabled { background: #444; cursor: not-allowed; }
-    
-    /* Audio player for voice */
-    .voice-msg {
-      margin-top: 8px;
-    }
-    .voice-msg audio {
-      height: 32px;
-      width: 200px;
-    }
-    
-    /* Welcome message */
-    .welcome {
-      text-align: center;
-      color: #666;
-      padding: 20px;
-      font-size: 13px;
-    }
-    .welcome h2 { color: #ff4444; margin-bottom: 10px; }
+    #send-btn:hover { background: #ff6666; }
+    #send-btn:disabled { background: #444; }
   </style>
 </head>
 <body>
-  <!-- Lobster Head -->
-  <div id="lobster-container">
-    <canvas id="canvas"></canvas>
-    <div id="speech-box"></div>
-  </div>
+  <canvas id="canvas"></canvas>
+  <div id="speech-box"></div>
   
-  <!-- Chat -->
-  <div id="chat-container">
-    <div id="chat-messages">
-      <div class="welcome">
-        <h2>🦞 Chat with SID</h2>
-        <p>Type a message below to talk to your favorite AI lobster</p>
-      </div>
+  <!-- Chat Toggle Button -->
+  <button id="chat-toggle" onclick="toggleChat()">🦞</button>
+  
+  <!-- Chat Terminal -->
+  <div id="chat-terminal">
+    <div id="chat-header">
+      <span class="title">🦞 SID Terminal</span>
+      <span class="status">● online</span>
+      <button class="close-btn" onclick="toggleChat()">✕</button>
     </div>
-    <div id="chat-input-container">
-      <input type="text" id="chat-input" placeholder="Say something to SID..." autocomplete="off">
+    <div id="chat-messages">
+      <div class="msg system">Type a message to chat with SID</div>
+    </div>
+    <div id="chat-input-area">
+      <input type="text" id="chat-input" placeholder="Say something..." autocomplete="off">
       <button id="send-btn">➤</button>
     </div>
   </div>
 
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
-      }
-    }
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
   </script>
   
   <script type="module">
     import * as THREE from 'three';
     
-    // ============ CHAT STATE ============
+    // ============ CHAT ============
+    let chatOpen = false;
     let isSpeaking = false;
     let speakingTime = 0;
     
-    // ============ THREE.JS SETUP ============
-    const canvas = document.getElementById('canvas');
-    const container = document.getElementById('lobster-container');
+    window.toggleChat = function() {
+      chatOpen = !chatOpen;
+      document.getElementById('chat-terminal').classList.toggle('open', chatOpen);
+      document.getElementById('chat-toggle').classList.toggle('open', chatOpen);
+      document.getElementById('chat-toggle').textContent = chatOpen ? '✕' : '🦞';
+      if (chatOpen) document.getElementById('chat-input').focus();
+    };
     
+    // ============ THREE.JS ============
+    const canvas = document.getElementById('canvas');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     
-    function updateSize() {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      renderer.setSize(w, h);
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-    }
-    
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.set(0, 0, 4);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
     
-    updateSize();
-    window.addEventListener('resize', updateSize);
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
     
     // Lighting
     scene.add(new THREE.AmbientLight(0xffffff, 0.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 1);
     keyLight.position.set(2, 3, 4);
     scene.add(keyLight);
-    const fillLight = new THREE.DirectionalLight(0xff4444, 0.3);
-    fillLight.position.set(-2, 0, 2);
-    scene.add(fillLight);
+    scene.add(new THREE.DirectionalLight(0xff4444, 0.3).translateX(-2));
+    scene.add(new THREE.DirectionalLight(0xff8844, 0.5).translateY(-2).translateZ(-3));
     
     // ============ LOBSTER ============
-    const lobsterGroup = new THREE.Group();
-    lobsterGroup.position.y = 0.2;
-    scene.add(lobsterGroup);
+    const lobster = new THREE.Group();
+    scene.add(lobster);
     
     const shellMat = new THREE.MeshStandardMaterial({ color: 0xcc2200, roughness: 0.4, metalness: 0.1 });
-    const darkShellMat = new THREE.MeshStandardMaterial({ color: 0x881100, roughness: 0.5, metalness: 0.1 });
+    const darkMat = new THREE.MeshStandardMaterial({ color: 0x881100, roughness: 0.5 });
     const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.1, metalness: 0.8 });
     const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffcc, emissive: 0x444422, roughness: 0.3 });
-    const antennaMat = new THREE.MeshStandardMaterial({ color: 0xdd4422 });
+    const antMat = new THREE.MeshStandardMaterial({ color: 0xdd4422 });
     
     // Head
     const headGeom = new THREE.SphereGeometry(1, 32, 32);
     headGeom.scale(1, 0.8, 1.1);
-    lobsterGroup.add(new THREE.Mesh(headGeom, shellMat));
+    lobster.add(new THREE.Mesh(headGeom, shellMat));
     
-    // Ridge
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.3, 1.2), darkShellMat);
+    // Ridge + spikes
+    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.3, 1.2), darkMat);
     ridge.position.set(0, 0.7, 0.1);
-    lobsterGroup.add(ridge);
-    
-    // Spikes
+    lobster.add(ridge);
     for (let i = 0; i < 5; i++) {
-      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 8), darkShellMat);
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.15, 8), darkMat);
       spike.position.set(0, 0.85, -0.4 + i * 0.2);
-      lobsterGroup.add(spike);
+      lobster.add(spike);
     }
     
     // Eye stalks
     const stalkGeom = new THREE.CylinderGeometry(0.08, 0.1, 0.4, 16);
-    const leftStalk = new THREE.Mesh(stalkGeom, shellMat);
-    leftStalk.position.set(-0.35, 0.5, 0.7);
-    leftStalk.rotation.set(-0.5, 0, -0.3);
-    lobsterGroup.add(leftStalk);
-    const rightStalk = new THREE.Mesh(stalkGeom, shellMat);
-    rightStalk.position.set(0.35, 0.5, 0.7);
-    rightStalk.rotation.set(-0.5, 0, 0.3);
-    lobsterGroup.add(rightStalk);
+    const lStalk = new THREE.Mesh(stalkGeom, shellMat);
+    lStalk.position.set(-0.35, 0.5, 0.7);
+    lStalk.rotation.set(-0.5, 0, -0.3);
+    lobster.add(lStalk);
+    const rStalk = new THREE.Mesh(stalkGeom, shellMat);
+    rStalk.position.set(0.35, 0.5, 0.7);
+    rStalk.rotation.set(-0.5, 0, 0.3);
+    lobster.add(rStalk);
     
     // Eyes
     const eyeGeom = new THREE.SphereGeometry(0.12, 16, 16);
-    const leftEye = new THREE.Mesh(eyeGeom, eyeWhiteMat);
-    leftEye.position.set(-0.45, 0.7, 0.9);
-    lobsterGroup.add(leftEye);
-    const rightEye = new THREE.Mesh(eyeGeom, eyeWhiteMat);
-    rightEye.position.set(0.45, 0.7, 0.9);
-    lobsterGroup.add(rightEye);
+    const lEye = new THREE.Mesh(eyeGeom, eyeWhiteMat);
+    lEye.position.set(-0.45, 0.7, 0.9);
+    lobster.add(lEye);
+    const rEye = new THREE.Mesh(eyeGeom, eyeWhiteMat);
+    rEye.position.set(0.45, 0.7, 0.9);
+    lobster.add(rEye);
     
     // Pupils
     const pupilGeom = new THREE.SphereGeometry(0.06, 16, 16);
-    const leftPupil = new THREE.Mesh(pupilGeom, eyeMat);
-    leftPupil.position.set(-0.45, 0.7, 1.02);
-    lobsterGroup.add(leftPupil);
-    const rightPupil = new THREE.Mesh(pupilGeom, eyeMat);
-    rightPupil.position.set(0.45, 0.7, 1.02);
-    lobsterGroup.add(rightPupil);
+    const lPupil = new THREE.Mesh(pupilGeom, eyeMat);
+    lPupil.position.set(-0.45, 0.7, 1.02);
+    lobster.add(lPupil);
+    const rPupil = new THREE.Mesh(pupilGeom, eyeMat);
+    rPupil.position.set(0.45, 0.7, 1.02);
+    lobster.add(rPupil);
     
-    // Antennae (simplified)
-    function makeAntenna(xSign) {
+    // Antennae
+    function makeAnt(sign) {
       const g = new THREE.Group();
       for (let i = 0; i < 6; i++) {
-        const seg = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.02, 0.025, 0.25, 8),
-          antennaMat
-        );
-        seg.position.y = i * 0.22;
-        seg.rotation.z = xSign * i * 0.15;
-        seg.rotation.x = -i * 0.1;
-        g.add(seg);
+        const s = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.25, 8), antMat);
+        s.position.y = i * 0.22;
+        s.rotation.z = sign * i * 0.15;
+        s.rotation.x = -i * 0.1;
+        g.add(s);
       }
       return g;
     }
-    const leftAnt = makeAntenna(-1);
-    leftAnt.position.set(-0.3, 0.7, 0.8);
-    lobsterGroup.add(leftAnt);
-    const rightAnt = makeAntenna(1);
-    rightAnt.position.set(0.3, 0.7, 0.8);
-    lobsterGroup.add(rightAnt);
+    const lAnt = makeAnt(-1);
+    lAnt.position.set(-0.3, 0.7, 0.8);
+    lobster.add(lAnt);
+    const rAnt = makeAnt(1);
+    rAnt.position.set(0.3, 0.7, 0.8);
+    lobster.add(rAnt);
     
-    // Mandibles
+    // Mandibles + jaw
     const mandGeom = new THREE.BoxGeometry(0.15, 0.08, 0.3);
-    const leftMand = new THREE.Mesh(mandGeom, darkShellMat);
-    leftMand.position.set(-0.2, -0.1, 0.9);
-    lobsterGroup.add(leftMand);
-    const rightMand = new THREE.Mesh(mandGeom, darkShellMat);
-    rightMand.position.set(0.2, -0.1, 0.9);
-    lobsterGroup.add(rightMand);
-    
-    // Jaw
-    const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.25), darkShellMat);
+    const lMand = new THREE.Mesh(mandGeom, darkMat);
+    lMand.position.set(-0.2, -0.1, 0.9);
+    lobster.add(lMand);
+    const rMand = new THREE.Mesh(mandGeom, darkMat);
+    rMand.position.set(0.2, -0.1, 0.9);
+    lobster.add(rMand);
+    const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.1, 0.25), darkMat);
     jaw.position.set(0, -0.3, 0.85);
-    lobsterGroup.add(jaw);
+    lobster.add(jaw);
     
     // ============ ANIMATION ============
     const mouse = { x: 0, y: 0 };
@@ -353,44 +383,35 @@
       const delta = clock.getDelta();
       const t = clock.getElapsedTime();
       
-      // Subtle head movement
-      lobsterGroup.rotation.y = Math.sin(t * 0.5) * 0.1;
-      lobsterGroup.rotation.x = Math.sin(t * 0.3) * 0.05;
+      lobster.rotation.y = Math.sin(t * 0.5) * 0.1;
+      lobster.rotation.x = Math.sin(t * 0.3) * 0.05;
       
-      // Eye tracking
-      leftPupil.position.x = -0.45 + mouse.x * 0.05;
-      leftPupil.position.y = 0.7 + mouse.y * 0.03;
-      rightPupil.position.x = 0.45 + mouse.x * 0.05;
-      rightPupil.position.y = 0.7 + mouse.y * 0.03;
+      lPupil.position.x = -0.45 + mouse.x * 0.05;
+      lPupil.position.y = 0.7 + mouse.y * 0.03;
+      rPupil.position.x = 0.45 + mouse.x * 0.05;
+      rPupil.position.y = 0.7 + mouse.y * 0.03;
       
-      // Blinking
       blinkTimer += delta;
-      if (!isBlinking && blinkTimer > 3 + Math.random() * 2) {
-        isBlinking = true;
-        blinkTimer = 0;
-      }
+      if (!isBlinking && blinkTimer > 3 + Math.random() * 2) { isBlinking = true; blinkTimer = 0; }
       if (isBlinking) {
         const p = blinkTimer * 10;
         const s = p < 1 ? 1 - p : (p < 2 ? p - 1 : 1);
-        leftEye.scale.y = rightEye.scale.y = s;
-        leftPupil.scale.y = rightPupil.scale.y = s;
+        lEye.scale.y = rEye.scale.y = lPupil.scale.y = rPupil.scale.y = s;
         if (p > 2) isBlinking = false;
       }
       
-      // Antenna sway
-      leftAnt.rotation.z = -0.2 + Math.sin(t * 1.5) * 0.1;
-      rightAnt.rotation.z = 0.2 + Math.sin(t * 1.5 + 0.5) * 0.1;
+      lAnt.rotation.z = -0.2 + Math.sin(t * 1.5) * 0.1;
+      rAnt.rotation.z = 0.2 + Math.sin(t * 1.5 + 0.5) * 0.1;
       
-      // Speaking animation
       if (isSpeaking) {
         speakingTime += delta;
         const open = Math.sin(speakingTime * 20) * 0.5 + 0.5;
-        leftMand.rotation.z = -open * 0.3;
-        rightMand.rotation.z = open * 0.3;
+        lMand.rotation.z = -open * 0.3;
+        rMand.rotation.z = open * 0.3;
         jaw.position.y = -0.3 - open * 0.1;
       } else {
-        leftMand.rotation.z *= 0.9;
-        rightMand.rotation.z *= 0.9;
+        lMand.rotation.z *= 0.9;
+        rMand.rotation.z *= 0.9;
         jaw.position.y += (-0.3 - jaw.position.y) * 0.1;
       }
       
@@ -398,127 +419,71 @@
     }
     animate();
     
-    // ============ CHAT FUNCTIONS ============
-    const messagesEl = document.getElementById('chat-messages');
-    const inputEl = document.getElementById('chat-input');
+    // ============ CHAT LOGIC ============
+    const msgBox = document.getElementById('chat-messages');
+    const input = document.getElementById('chat-input');
     const sendBtn = document.getElementById('send-btn');
     const speechBox = document.getElementById('speech-box');
     
-    function addMessage(text, type, voice = null) {
-      // Remove welcome message
-      const welcome = messagesEl.querySelector('.welcome');
-      if (welcome) welcome.remove();
-      
+    function addMsg(text, type) {
       const div = document.createElement('div');
-      div.className = `message ${type}`;
-      
-      if (type === 'sid') {
-        div.innerHTML = `<div class="name">🦞 SID</div>${text}`;
-      } else {
-        div.textContent = text;
-      }
-      
-      // Add voice player if present
-      if (voice) {
-        const voiceDiv = document.createElement('div');
-        voiceDiv.className = 'voice-msg';
-        voiceDiv.innerHTML = `<audio controls src="${voice}"></audio>`;
-        div.appendChild(voiceDiv);
-      }
-      
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-      
+      div.className = `msg ${type}`;
+      div.textContent = text;
+      msgBox.appendChild(div);
+      msgBox.scrollTop = msgBox.scrollHeight;
       return div;
     }
     
-    function showTyping() {
-      const div = document.createElement('div');
-      div.className = 'message sid typing';
-      div.id = 'typing-indicator';
-      div.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-    
-    function hideTyping() {
-      const el = document.getElementById('typing-indicator');
-      if (el) el.remove();
-    }
-    
-    function showSpeechBubble(text) {
+    function showSpeech(text) {
       speechBox.textContent = text;
       speechBox.classList.add('visible');
       isSpeaking = true;
       speakingTime = 0;
-      
-      setTimeout(() => {
-        speechBox.classList.remove('visible');
-        isSpeaking = false;
-      }, Math.min(text.length * 60 + 1000, 5000));
+      setTimeout(() => { speechBox.classList.remove('visible'); isSpeaking = false; }, Math.min(text.length * 60 + 1000, 4000));
     }
     
-    // Quick local responses (no API needed)
-    function getLocalResponse(text) {
-      const lower = text.toLowerCase();
-      
-      const patterns = [
-        [/\b(gm|good morning)\b/, ["Gm gm! 🦞", "Gm dude!", "Morning! How's it going?"]],
-        [/\b(gn|good night)\b/, ["Gn bro, sleep well 🦞", "Night dude!", "Sweet dreams!"]],
-        [/\b(hello|hi|hey|sup|yo)\b/, ["Yo! What's good? 🦞", "Hey hey!", "Sup dude!"]],
-        [/how are you|how('s| is) it going/, ["Chillin as always! You?", "Living the dream 🦞"]],
-        [/thanks|thank you/, ["No prob! 🦞", "Anytime dude!", "You got it!"]],
-        [/who are you|what are you/, ["I'm Sid - a chill AI lobster just vibing 🦞"]],
-        [/love you/, ["Love you too! 🦞❤️", "Right back at ya!"]],
-        [/\?$/, ["Hmm good question dude", "Let me think... 🦞", "Interesting thought!"]],
+    function getResponse(text) {
+      const l = text.toLowerCase();
+      const p = [
+        [/\b(gm|good morning)\b/, ["Gm gm! 🦞", "Gm dude!"]],
+        [/\b(gn|good night)\b/, ["Gn bro! 🦞", "Sleep well!"]],
+        [/\b(hello|hi|hey|sup|yo)\b/, ["Yo! 🦞", "Hey!", "Sup dude!"]],
+        [/how are you/, ["Chillin! You? 🦞"]],
+        [/thanks|thank you/, ["No prob! 🦞"]],
+        [/who are you/, ["I'm Sid - a chill AI lobster 🦞"]],
+        [/love you/, ["Love you too! 🦞❤️"]],
       ];
-      
-      for (const [pattern, responses] of patterns) {
-        if (pattern.test(lower)) {
-          return responses[Math.floor(Math.random() * responses.length)];
-        }
-      }
-      
-      const fallbacks = [
-        "I hear you dude 🦞",
-        "That's cool!",
-        "For sure bro",
-        "Haha nice",
-        "Vibes 🦞",
-      ];
-      return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      for (const [r, a] of p) if (r.test(l)) return a[Math.floor(Math.random() * a.length)];
+      return ["Vibes 🦞", "I hear you", "For sure", "Nice one"][Math.floor(Math.random() * 4)];
     }
     
-    async function sendMessage() {
-      const text = inputEl.value.trim();
+    async function send() {
+      const text = input.value.trim();
       if (!text) return;
-      
-      inputEl.value = '';
+      input.value = '';
       sendBtn.disabled = true;
       
-      addMessage(text, 'user');
-      showTyping();
+      addMsg(text, 'user');
       
-      // Simulate thinking delay
-      await new Promise(r => setTimeout(r, 800 + Math.random() * 700));
+      const typing = document.createElement('div');
+      typing.className = 'msg sid typing';
+      typing.innerHTML = '<span></span><span></span><span></span>';
+      msgBox.appendChild(typing);
+      msgBox.scrollTop = msgBox.scrollHeight;
       
-      hideTyping();
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
       
-      const response = getLocalResponse(text);
-      showSpeechBubble(response);
-      addMessage(response, 'sid');
+      typing.remove();
+      const resp = getResponse(text);
+      addMsg(resp, 'sid');
+      showSpeech(resp);
       
       sendBtn.disabled = false;
-      inputEl.focus();
+      input.focus();
     }
     
-    sendBtn.addEventListener('click', sendMessage);
-    inputEl.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendMessage();
-    });
-    
-    // Focus input on load
-    inputEl.focus();
+    sendBtn.onclick = send;
+    input.onkeypress = e => { if (e.key === 'Enter') send(); };
   </script>
 </body>
 </html>

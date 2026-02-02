@@ -1,0 +1,35 @@
+{
+  "users": {
+    "7006302614": {
+      "name": "falsezero",
+      "firstSeen": 1769991990274,
+      "lastSeen": 1769992008250,
+      "messageCount": 2,
+      "facts": []
+    }
+  },
+  "conversations": {
+    "7006302614": [
+      {
+        "role": "user",
+        "content": "What’s going on",
+        "ts": 1769991990274
+      },
+      {
+        "role": "assistant",
+        "content": "For sure bro",
+        "ts": 1769991990324
+      },
+      {
+        "role": "user",
+        "content": "Explain synthesis",
+        "ts": 1769992008250
+      },
+      {
+        "role": "assistant",
+        "content": "I hear you dude",
+        "ts": 1769992008264
+      }
+    ]
+  }
+}
