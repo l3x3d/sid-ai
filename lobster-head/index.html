@@ -7,203 +7,249 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
-      background: linear-gradient(180deg, #1a2a4a 0%, #0d1a2d 50%, #0a1520 100%);
-      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: linear-gradient(180deg, #0a1628 0%, #0d1a2d 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
       height: 100vh;
       overflow: hidden;
       display: flex;
+      flex-direction: column;
     }
     
-    #lobster-section { flex: 1; position: relative; min-width: 400px; }
-    #canvas { display: block; width: 100%; height: 100%; }
-    
-    #speech-box {
-      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-      background: rgba(255,255,255,0.95); border: 3px solid #ff6b4a; border-radius: 20px;
-      padding: 15px 25px; color: #333; font-size: 18px; max-width: 400px; text-align: center;
-      opacity: 0; transition: opacity 0.3s; z-index: 10; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    /* Header */
+    #header {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid #1a2a4a;
     }
-    #speech-box.visible { opacity: 1; }
+    #header .logo { font-size: 28px; margin-right: 12px; }
+    #header .title { color: #fff; font-weight: 600; font-size: 18px; flex: 1; }
+    #header .status { color: #27ca40; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    #header .status::before { content: ''; width: 8px; height: 8px; background: #27ca40; border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     
-    #waveform-container {
-      position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%);
-      width: 200px; height: 60px; display: none; z-index: 5;
-    }
-    #waveform-container.active { display: block; }
-    #waveform { width: 100%; height: 100%; }
+    /* Main content */
+    #main { display: flex; flex: 1; overflow: hidden; }
     
-    #terminal-section {
-      width: 50%; max-width: 700px; display: flex; flex-direction: column;
-      background: #0d0d0d; border-left: 1px solid #333;
-    }
-    
-    #terminal-header {
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-      border-bottom: 1px solid #333;
-    }
-    #terminal-header .dots { display: flex; gap: 6px; }
-    #terminal-header .dot { width: 12px; height: 12px; border-radius: 50%; }
-    #terminal-header .dot.red { background: #ff5f56; }
-    #terminal-header .dot.yellow { background: #ffbd2e; }
-    #terminal-header .dot.green { background: #27ca40; }
-    #terminal-header .title { flex: 1; color: #888; font-size: 13px; text-align: center; }
-    #terminal-header .status { color: #27ca40; font-size: 12px; }
-    
-    #terminal-tabs { display: flex; background: #111; border-bottom: 1px solid #333; }
-    .terminal-tab { padding: 10px 20px; color: #666; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; }
-    .terminal-tab:hover { color: #aaa; }
-    .terminal-tab.active { color: #fff; border-bottom-color: #27ca40; background: #1a1a1a; }
-    
-    #terminal-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    
-    #terminal-output {
-      flex: 1; padding: 15px; overflow-y: auto;
-      font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; line-height: 1.5;
-      color: #0f0; background: #0a0a0a;
+    /* Chat side */
+    #chat-section {
+      width: 420px;
+      display: flex;
+      flex-direction: column;
+      background: #0d1420;
+      border-right: 1px solid #1a2a4a;
     }
     
-    .term-line { margin: 2px 0; white-space: pre-wrap; word-break: break-all; }
-    .term-line.input { color: #0ff; }
-    .term-line.output { color: #0f0; }
-    .term-line.error { color: #f55; }
-    .term-line.info { color: #888; }
-    .term-line.success { color: #0f0; }
-    .term-line.sid { color: #ff6b4a; }
-    
-    #terminal-input-area {
-      display: flex; align-items: center; padding: 12px 15px;
-      background: #111; border-top: 1px solid #333; gap: 10px;
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
-    #terminal-prompt { color: #27ca40; font-family: monospace; }
-    #terminal-input {
-      flex: 1; background: transparent; border: none; color: #fff;
-      font-family: 'Monaco', 'Menlo', monospace; font-size: 14px; outline: none;
+    #messages::-webkit-scrollbar { width: 6px; }
+    #messages::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    
+    .msg {
+      max-width: 90%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      line-height: 1.5;
+      font-size: 14px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .msg.user {
+      background: linear-gradient(135deg, #ff6b4a, #ff8866);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.sid {
+      background: #1a2a3a;
+      color: #e8e8e8;
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.sid .lobster { margin-right: 6px; }
+    .msg.system { 
+      background: transparent; 
+      color: #666; 
+      font-size: 12px; 
+      align-self: center;
+      padding: 8px;
+    }
+    .msg.building {
+      background: #1a2a3a;
+      border: 1px solid #27ca40;
+      color: #27ca40;
     }
     
-    #preview-container { display: none; flex: 1; background: #fff; }
-    #preview-container.active { display: block; }
-    #preview-frame { width: 100%; height: 100%; border: none; }
-    
-    #chat-toggle {
-      position: fixed; bottom: 20px; left: 20px; width: 65px; height: 65px;
-      background: linear-gradient(135deg, #ff6b4a, #ff8866); border: none; border-radius: 50%;
-      cursor: pointer; font-size: 32px; color: white; box-shadow: 0 4px 20px rgba(255,107,74,0.5);
-      z-index: 1000;
-    }
-    #chat-toggle:hover { transform: scale(1.1); }
-    #chat-toggle.open { background: linear-gradient(135deg, #444, #666); }
-    
-    #chat-terminal {
-      position: fixed; bottom: 100px; left: 20px; width: 360px; height: 420px;
-      background: rgba(255,255,255,0.98); border-radius: 20px; display: none;
-      flex-direction: column; z-index: 999; box-shadow: 0 15px 50px rgba(0,0,0,0.3);
-    }
-    #chat-terminal.open { display: flex; }
-    
-    #chat-header {
-      background: linear-gradient(135deg, #ff6b4a, #ff8866); padding: 15px 18px;
-      display: flex; align-items: center; gap: 12px; border-radius: 20px 20px 0 0;
-    }
-    #chat-header .avatar { font-size: 28px; }
-    #chat-header .title { flex: 1; font-weight: 600; color: #fff; font-size: 16px; }
-    #chat-header .close-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; }
-    
-    #chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #f8f9fa; }
-    .msg { max-width: 80%; padding: 10px 14px; border-radius: 18px; line-height: 1.4; font-size: 14px; }
-    .msg.user { background: #ff6b4a; color: #fff; align-self: flex-end; }
-    .msg.sid { background: #fff; color: #333; align-self: flex-start; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .msg.system { background: transparent; color: #888; font-size: 12px; align-self: center; }
-    
-    .typing { display: flex; gap: 5px; padding: 10px 14px; background: #fff; border-radius: 18px; }
+    .typing { display: flex; gap: 4px; padding: 12px 16px; background: #1a2a3a; border-radius: 16px; align-self: flex-start; }
     .typing span { width: 8px; height: 8px; background: #ff6b4a; border-radius: 50%; animation: bounce 1.4s infinite; }
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
     
-    #chat-input-area { display: flex; gap: 10px; padding: 15px; background: #fff; border-top: 1px solid #eee; border-radius: 0 0 20px 20px; }
-    #chat-input { flex: 1; background: #f0f2f5; border: none; border-radius: 24px; padding: 12px 18px; font-size: 14px; outline: none; }
-    #send-btn { background: #ff6b4a; border: none; color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 18px; }
-    
-    #audio-player { display: none; }
-    
-    #loading-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(10, 21, 32, 0.95); display: flex; flex-direction: column;
-      align-items: center; justify-content: center; z-index: 2000;
+    #input-area {
+      display: flex;
+      gap: 10px;
+      padding: 16px;
+      background: #0a1018;
+      border-top: 1px solid #1a2a4a;
     }
-    #loading-overlay.hidden { opacity: 0; pointer-events: none; }
-    #loading-text { color: #fff; font-size: 18px; margin-top: 20px; }
-    #loading-sub { color: #888; font-size: 14px; margin-top: 8px; }
-    .loader { width: 60px; height: 60px; border: 4px solid #333; border-top-color: #27ca40; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    #chat-input {
+      flex: 1;
+      background: #1a2a3a;
+      border: 1px solid #2a3a4a;
+      border-radius: 24px;
+      padding: 14px 20px;
+      font-size: 14px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #chat-input:focus { border-color: #ff6b4a; }
+    #chat-input::placeholder { color: #666; }
+    #send-btn {
+      background: linear-gradient(135deg, #ff6b4a, #ff8866);
+      border: none;
+      color: white;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      transition: transform 0.2s;
+    }
+    #send-btn:hover { transform: scale(1.05); }
+    #send-btn:disabled { opacity: 0.5; }
+    
+    /* Terminal side */
+    #terminal-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0a0a0a;
+    }
+    
+    #terminal-tabs {
+      display: flex;
+      background: #111;
+      border-bottom: 1px solid #222;
+    }
+    .tab {
+      padding: 12px 24px;
+      color: #666;
+      font-size: 13px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: #aaa; }
+    .tab.active { color: #fff; border-bottom-color: #ff6b4a; background: #1a1a1a; }
+    
+    #terminal-output {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #0f0;
+      background: #0a0a0a;
+    }
+    #terminal-output::-webkit-scrollbar { width: 8px; }
+    #terminal-output::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    
+    .term-line { margin: 3px 0; white-space: pre-wrap; word-break: break-all; }
+    .term-line.cmd { color: #0ff; }
+    .term-line.output { color: #0f0; }
+    .term-line.error { color: #f66; }
+    .term-line.info { color: #888; }
+    .term-line.success { color: #0f0; }
+    .term-line.sid { color: #ff6b4a; font-weight: 500; }
+    .term-line.file { color: #ffcc00; }
+    
+    #preview-container { display: none; flex: 1; background: #fff; }
+    #preview-container.active { display: flex; flex-direction: column; }
+    #preview-url { padding: 8px 12px; background: #eee; font-family: monospace; font-size: 12px; color: #333; border-bottom: 1px solid #ddd; }
+    #preview-frame { flex: 1; border: none; }
+    
+    /* Loading */
+    #loading {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(10, 22, 40, 0.98);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: opacity 0.5s;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    #loading .spinner { font-size: 48px; animation: spin 2s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    #loading .text { color: #fff; font-size: 18px; margin-top: 20px; }
+    #loading .sub { color: #888; font-size: 14px; margin-top: 8px; }
   </style>
 </head>
 <body>
-  <div id="loading-overlay">
-    <div class="loader"></div>
-    <div id="loading-text">🦞 Booting SID's workspace...</div>
-    <div id="loading-sub">Starting WebContainer</div>
+  <div id="loading">
+    <div class="spinner">🦞</div>
+    <div class="text">Booting SID's workspace...</div>
+    <div class="sub" id="loading-status">Starting WebContainer</div>
   </div>
 
-  <div id="lobster-section">
-    <canvas id="canvas"></canvas>
-    <div id="speech-box"></div>
-    <div id="waveform-container"><canvas id="waveform"></canvas></div>
+  <div id="header">
+    <span class="logo">🦞</span>
+    <span class="title">SID - AI Lobster</span>
+    <span class="status">WebContainer Ready</span>
   </div>
   
-  <div id="terminal-section">
-    <div id="terminal-header">
-      <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
-      <div class="title">SID's Workspace</div>
-      <div class="status">● WebContainer</div>
+  <div id="main">
+    <div id="chat-section">
+      <div id="messages">
+        <div class="msg sid"><span class="lobster">🦞</span> Yo! I'm Sid. Ask me to build something - a game, a tool, whatever you want!</div>
+      </div>
+      <div id="input-area">
+        <input type="text" id="chat-input" placeholder="Build me a..." autocomplete="off">
+        <button id="send-btn">➤</button>
+      </div>
     </div>
-    <div id="terminal-tabs">
-      <div class="terminal-tab active" data-tab="terminal">Terminal</div>
-      <div class="terminal-tab" data-tab="preview">Preview</div>
-    </div>
-    <div id="terminal-content">
+    
+    <div id="terminal-section">
+      <div id="terminal-tabs">
+        <div class="tab active" data-tab="terminal">Terminal</div>
+        <div class="tab" data-tab="preview">Preview</div>
+      </div>
       <div id="terminal-output"></div>
-      <div id="preview-container"><iframe id="preview-frame"></iframe></div>
-    </div>
-    <div id="terminal-input-area">
-      <span id="terminal-prompt">$</span>
-      <input type="text" id="terminal-input" placeholder="Type a command or ask SID to build something..." autocomplete="off">
-    </div>
-  </div>
-  
-  <audio id="audio-player"></audio>
-  <button id="chat-toggle" onclick="toggleChat()">🦞</button>
-  
-  <div id="chat-terminal">
-    <div id="chat-header">
-      <span class="avatar">🦞</span>
-      <span class="title">Chat with Sid</span>
-      <button class="close-btn" onclick="toggleChat()">✕</button>
-    </div>
-    <div id="chat-messages"><div class="msg system">Ask Sid to build something!</div></div>
-    <div id="chat-input-area">
-      <input type="text" id="chat-input" placeholder="Build me a..." autocomplete="off">
-      <button id="send-btn">➤</button>
+      <div id="preview-container">
+        <div id="preview-url">No preview yet</div>
+        <iframe id="preview-frame"></iframe>
+      </div>
     </div>
   </div>
 
-  <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","@webcontainer/api":"https://esm.sh/@webcontainer/api"}}</script>
   <script type="module">
-    import * as THREE from 'three';
-    import { WebContainer } from '@webcontainer/api';
+    import { WebContainer } from 'https://esm.sh/@webcontainer/api';
     
-    let chatOpen = false, isSpeaking = false, speakingTime = 0;
-    let audioContext, analyser, dataArray;
     let webcontainer = null;
-    
+    const messages = document.getElementById('messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
     const termOutput = document.getElementById('terminal-output');
-    const termInput = document.getElementById('terminal-input');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const loadingSub = document.getElementById('loading-sub');
+    const loading = document.getElementById('loading');
+    const loadingStatus = document.getElementById('loading-status');
     const previewFrame = document.getElementById('preview-frame');
+    const previewUrl = document.getElementById('preview-url');
     const previewContainer = document.getElementById('preview-container');
     
+    // Terminal logging
     function termLog(text, type = 'output') {
       const line = document.createElement('div');
       line.className = 'term-line ' + type;
@@ -212,71 +258,101 @@
       termOutput.scrollTop = termOutput.scrollHeight;
     }
     
-    async function bootWebContainer() {
+    // Chat messages
+    function addMsg(text, type, extra = '') {
+      const div = document.createElement('div');
+      div.className = 'msg ' + type + ' ' + extra;
+      if (type === 'sid') {
+        div.innerHTML = '<span class="lobster">🦞</span> ' + escapeHtml(text);
+      } else {
+        div.textContent = text;
+      }
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+      return div;
+    }
+    
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'typing';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<span></span><span></span><span></span>';
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+    
+    function hideTyping() {
+      const t = document.getElementById('typing-indicator');
+      if (t) t.remove();
+    }
+    
+    // WebContainer
+    async function boot() {
       try {
-        loadingSub.textContent = 'Initializing WebContainer...';
+        loadingStatus.textContent = 'Initializing WebContainer...';
         webcontainer = await WebContainer.boot();
         
-        loadingSub.textContent = 'Setting up filesystem...';
+        loadingStatus.textContent = 'Setting up filesystem...';
         await webcontainer.mount({
-          'package.json': {
-            file: { contents: JSON.stringify({
-              name: 'sid-workspace',
-              type: 'module',
-              scripts: { start: 'node index.js', dev: 'npx vite' }
-            }, null, 2) }
-          },
-          'index.js': {
-            file: { contents: '// SID workspace ready!\nconsole.log("Hello from SID!");\n' }
-          }
+          'package.json': { file: { contents: '{"name":"sid-app","scripts":{"dev":"npx serve ."}}' } },
+          'index.html': { file: { contents: '<!DOCTYPE html><html><body><h1>🦞 Ready to build!</h1></body></html>' } }
         });
         
         webcontainer.on('server-ready', (port, url) => {
-          termLog('Server ready at ' + url, 'success');
+          termLog('🌐 Server: ' + url, 'success');
+          previewUrl.textContent = url;
           previewFrame.src = url;
         });
         
-        loadingSub.textContent = 'Ready!';
-        setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+        loadingStatus.textContent = 'Ready!';
+        setTimeout(() => loading.classList.add('hidden'), 300);
         
         termLog('🦞 SID WebContainer ready!', 'sid');
-        termLog('Type commands or ask me to build something.', 'info');
+        termLog('Chat with me to build something cool.', 'info');
         
       } catch (e) {
-        console.error('WebContainer boot failed:', e);
-        loadingSub.textContent = 'Failed - ' + e.message;
-        termLog('WebContainer failed: ' + e.message, 'error');
+        loadingStatus.textContent = 'Error: ' + e.message;
+        termLog('❌ ' + e.message, 'error');
+        addMsg("Couldn't start WebContainer - " + e.message, 'sid');
       }
     }
     
-    async function runCommand(cmd) {
-      if (!webcontainer) { termLog('WebContainer not ready', 'error'); return; }
-      
-      termLog('$ ' + cmd, 'input');
-      const parts = cmd.split(' ');
+    // Run command
+    async function runCmd(cmd) {
+      if (!webcontainer) return;
+      termLog('$ ' + cmd, 'cmd');
       
       try {
-        const process = await webcontainer.spawn(parts[0], parts.slice(1));
-        process.output.pipeTo(new WritableStream({
-          write(data) { 
-            data.split('\n').forEach(line => { if (line.trim()) termLog(line, 'output'); });
+        const parts = cmd.split(' ');
+        const proc = await webcontainer.spawn(parts[0], parts.slice(1));
+        proc.output.pipeTo(new WritableStream({
+          write(data) {
+            data.split('\n').forEach(line => {
+              if (line.trim()) termLog(line, 'output');
+            });
           }
         }));
-        const exitCode = await process.exit;
-        if (exitCode !== 0) termLog('Process exited with code ' + exitCode, 'error');
+        await proc.exit;
       } catch (e) {
         termLog('Error: ' + e.message, 'error');
       }
     }
     
+    // Write file
     async function writeFile(path, contents) {
       if (!webcontainer) return;
       await webcontainer.fs.writeFile(path, contents);
-      termLog('Wrote ' + path, 'success');
+      termLog('📝 ' + path, 'file');
     }
     
-    async function askSidToBuild(request) {
-      termLog('🦞 SID: "' + request + '"... let me cook!', 'sid');
+    // Build with SID
+    async function buildWithSid(request) {
+      showTyping();
+      termLog('🦞 Building: ' + request, 'sid');
       
       try {
         const resp = await fetch('/api/build', {
@@ -286,49 +362,87 @@
         });
         
         const data = await resp.json();
+        hideTyping();
         
         if (data.message) {
-          termLog('🦞 ' + data.message, 'sid');
-          showSpeech(data.message);
+          addMsg(data.message, 'sid');
         }
         
-        if (data.files) {
+        if (data.files && Object.keys(data.files).length > 0) {
+          addMsg("Writing files...", 'sid', 'building');
+          
           for (const [path, contents] of Object.entries(data.files)) {
             await writeFile(path, contents);
           }
-        }
-        
-        if (data.commands && data.commands.length > 0) {
-          for (const cmd of data.commands) {
-            await runCommand(cmd);
-          }
+          
+          // Start server
+          termLog('Starting preview server...', 'info');
+          await runCmd('npx serve .');
+          
+          addMsg("Done! Check the Preview tab 👉", 'sid');
+          
+        } else {
+          addMsg("Hmm, couldn't generate that. Try again?", 'sid');
         }
         
       } catch (e) {
+        hideTyping();
         termLog('Error: ' + e.message, 'error');
+        addMsg("Something went wrong: " + e.message, 'sid');
       }
     }
     
-    termInput.addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter') {
-        const cmd = termInput.value.trim();
-        termInput.value = '';
-        if (!cmd) return;
+    // Chat with SID
+    async function chatWithSid(text) {
+      showTyping();
+      
+      try {
+        const resp = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text })
+        });
         
-        if (cmd.toLowerCase().startsWith('build ') || cmd.toLowerCase().startsWith('create ') || cmd.toLowerCase().startsWith('make ')) {
-          await askSidToBuild(cmd);
-        } else {
-          await runCommand(cmd);
-        }
+        const data = await resp.json();
+        hideTyping();
+        addMsg(data.reply || "...", 'sid');
+        
+      } catch (e) {
+        hideTyping();
+        addMsg("Brain freeze! 🧊", 'sid');
       }
-    });
+    }
     
-    document.querySelectorAll('.terminal-tab').forEach(tab => {
+    // Send message
+    async function send() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      
+      chatInput.value = '';
+      sendBtn.disabled = true;
+      addMsg(text, 'user');
+      
+      // Check if it's a build request
+      const buildKeywords = ['build', 'create', 'make', 'generate', 'code', 'write', 'develop'];
+      const isBuild = buildKeywords.some(k => text.toLowerCase().includes(k));
+      
+      if (isBuild) {
+        await buildWithSid(text);
+      } else {
+        await chatWithSid(text);
+      }
+      
+      sendBtn.disabled = false;
+      chatInput.focus();
+    }
+    
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.terminal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        const tabName = tab.dataset.tab;
-        if (tabName === 'preview') {
+        
+        if (tab.dataset.tab === 'preview') {
           previewContainer.classList.add('active');
           termOutput.style.display = 'none';
         } else {
@@ -338,241 +452,12 @@
       });
     });
     
-    bootWebContainer();
+    // Event listeners
+    sendBtn.onclick = send;
+    chatInput.onkeypress = e => { if (e.key === 'Enter') send(); };
     
-    // Chat toggle
-    window.toggleChat = function() {
-      chatOpen = !chatOpen;
-      document.getElementById('chat-terminal').classList.toggle('open', chatOpen);
-      document.getElementById('chat-toggle').classList.toggle('open', chatOpen);
-      document.getElementById('chat-toggle').textContent = chatOpen ? '✕' : '🦞';
-      if (chatOpen) document.getElementById('chat-input').focus();
-    };
-    
-    // Waveform
-    const waveformContainer = document.getElementById('waveform-container');
-    const waveformCanvas = document.getElementById('waveform');
-    const waveCtx = waveformCanvas.getContext('2d');
-    waveformCanvas.width = 200;
-    waveformCanvas.height = 60;
-    
-    function drawWaveform() {
-      if (!isSpeaking || !analyser) { waveformContainer.classList.remove('active'); return; }
-      waveformContainer.classList.add('active');
-      analyser.getByteFrequencyData(dataArray);
-      waveCtx.clearRect(0, 0, 200, 60);
-      const bars = 20, barWidth = 6, gap = 4;
-      const startX = (200 - (bars * (barWidth + gap))) / 2;
-      for (let i = 0; i < bars; i++) {
-        const value = dataArray[Math.floor(i * dataArray.length / bars)] / 255;
-        const height = Math.max(4, value * 50);
-        waveCtx.fillStyle = '#00ff88';
-        waveCtx.shadowColor = '#00ff88';
-        waveCtx.shadowBlur = 10;
-        waveCtx.beginPath();
-        waveCtx.roundRect(startX + i * (barWidth + gap), 30 - height/2, barWidth, height, 3);
-        waveCtx.fill();
-      }
-      requestAnimationFrame(drawWaveform);
-    }
-    
-    // THREE.JS
-    const canvas = document.getElementById('canvas');
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 100);
-    camera.position.set(0, 0, 5);
-    
-    window.addEventListener('resize', () => {
-      const w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    });
-    
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1);
-    keyLight.position.set(2, 3, 4);
-    scene.add(keyLight);
-    scene.add(new THREE.DirectionalLight(0xff9966, 0.4).translateX(-3));
-    
-    const lobster = new THREE.Group();
-    scene.add(lobster);
-    
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xff6b4a, roughness: 0.4 });
-    const lightMat = new THREE.MeshStandardMaterial({ color: 0xff8866, roughness: 0.35 });
-    const darkMat = new THREE.MeshStandardMaterial({ color: 0xdd5544, roughness: 0.45 });
-    const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
-    const pupilMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.1 });
-    const cheekMat = new THREE.MeshStandardMaterial({ color: 0xffaaaa, roughness: 0.5 });
-    
-    const bodyGeom = new THREE.SphereGeometry(1, 32, 32);
-    bodyGeom.scale(1.1, 0.9, 1);
-    lobster.add(new THREE.Mesh(bodyGeom, bodyMat));
-    
-    const cheekGeom = new THREE.SphereGeometry(0.2, 16, 16);
-    const lCheek = new THREE.Mesh(cheekGeom, cheekMat); lCheek.position.set(-0.55, -0.1, 0.7); lobster.add(lCheek);
-    const rCheek = new THREE.Mesh(cheekGeom, cheekMat); rCheek.position.set(0.55, -0.1, 0.7); lobster.add(rCheek);
-    
-    const stalkGeom = new THREE.CylinderGeometry(0.08, 0.1, 0.25, 12);
-    const lStalk = new THREE.Mesh(stalkGeom, bodyMat); lStalk.position.set(-0.35, 0.55, 0.6); lStalk.rotation.set(-0.3, 0, -0.2); lobster.add(lStalk);
-    const rStalk = new THREE.Mesh(stalkGeom, bodyMat); rStalk.position.set(0.35, 0.55, 0.6); rStalk.rotation.set(-0.3, 0, 0.2); lobster.add(rStalk);
-    
-    const eyeGeom = new THREE.SphereGeometry(0.22, 24, 24);
-    const lEye = new THREE.Mesh(eyeGeom, eyeWhiteMat); lEye.position.set(-0.4, 0.7, 0.75); lobster.add(lEye);
-    const rEye = new THREE.Mesh(eyeGeom, eyeWhiteMat); rEye.position.set(0.4, 0.7, 0.75); lobster.add(rEye);
-    
-    const pupilGeom = new THREE.SphereGeometry(0.1, 16, 16);
-    const lPupil = new THREE.Mesh(pupilGeom, pupilMat); lPupil.position.set(-0.4, 0.72, 0.95); lobster.add(lPupil);
-    const rPupil = new THREE.Mesh(pupilGeom, pupilMat); rPupil.position.set(0.4, 0.72, 0.95); lobster.add(rPupil);
-    
-    const highlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const highlightGeom = new THREE.SphereGeometry(0.04, 8, 8);
-    const lHighlight = new THREE.Mesh(highlightGeom, highlightMat); lHighlight.position.set(-0.35, 0.78, 0.98); lobster.add(lHighlight);
-    const rHighlight = new THREE.Mesh(highlightGeom, highlightMat); rHighlight.position.set(0.45, 0.78, 0.98); lobster.add(rHighlight);
-    
-    function makeAntenna(xSign) {
-      const g = new THREE.Group();
-      const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0,0,0), new THREE.Vector3(xSign*0.3,0.5,0.2), new THREE.Vector3(xSign*0.5,1.2,0), new THREE.Vector3(xSign*0.4,1.8,-0.2)]);
-      g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.03, 8, false), darkMat));
-      const tip = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), lightMat); tip.position.set(xSign*0.4, 1.8, -0.2); g.add(tip);
-      return g;
-    }
-    const lAnt = makeAntenna(-1); lAnt.position.set(-0.15, 0.5, 0.7); lobster.add(lAnt);
-    const rAnt = makeAntenna(1); rAnt.position.set(0.15, 0.5, 0.7); lobster.add(rAnt);
-    
-    const smileCurve = new THREE.EllipseCurve(0, 0, 0.25, 0.12, 0, Math.PI, false, 0);
-    const smile = new THREE.Line(new THREE.BufferGeometry().setFromPoints(smileCurve.getPoints(20)), new THREE.LineBasicMaterial({ color: 0x993322 }));
-    smile.position.set(0, -0.25, 1.0); smile.rotation.z = Math.PI; lobster.add(smile);
-    
-    function makeClaw(xSign) {
-      const g = new THREE.Group();
-      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.4, 8, 8), bodyMat); arm.rotation.z = xSign * 0.6; g.add(arm);
-      const claw = new THREE.Mesh(new THREE.SphereGeometry(0.15, 16, 16), lightMat); claw.scale.set(1.2, 0.8, 1); claw.position.set(xSign * 0.35, -0.1, 0); g.add(claw);
-      return g;
-    }
-    const lClaw = makeClaw(-1); lClaw.position.set(-0.7, -0.3, 0.3); lobster.add(lClaw);
-    const rClaw = makeClaw(1); rClaw.position.set(0.7, -0.3, 0.3); lobster.add(rClaw);
-    
-    const mouse = { x: 0, y: 0 };
-    let blinkTimer = 0, isBlinking = false;
-    document.addEventListener('mousemove', e => { mouse.x = (e.clientX / window.innerWidth) * 2 - 1; mouse.y = -(e.clientY / window.innerHeight) * 2 + 1; });
-    
-    const clock = new THREE.Clock();
-    function animate() {
-      requestAnimationFrame(animate);
-      const delta = clock.getDelta(), t = clock.getElapsedTime();
-      
-      lobster.rotation.y = Math.sin(t * 0.5) * 0.1;
-      lobster.rotation.x = Math.sin(t * 0.3) * 0.03;
-      lobster.position.y = Math.sin(t * 0.7) * 0.05;
-      
-      lPupil.position.x = -0.4 + mouse.x * 0.06;
-      lPupil.position.y = 0.72 + mouse.y * 0.04;
-      rPupil.position.x = 0.4 + mouse.x * 0.06;
-      rPupil.position.y = 0.72 + mouse.y * 0.04;
-      
-      blinkTimer += delta;
-      if (!isBlinking && blinkTimer > 3 + Math.random() * 2) { isBlinking = true; blinkTimer = 0; }
-      if (isBlinking) {
-        const p = blinkTimer * 10, s = p < 1 ? 1 - p : (p < 2 ? p - 1 : 1);
-        lEye.scale.y = rEye.scale.y = lPupil.scale.y = rPupil.scale.y = s;
-        lHighlight.visible = rHighlight.visible = s > 0.5;
-        if (p > 2) isBlinking = false;
-      }
-      
-      lAnt.rotation.z = Math.sin(t * 1.5) * 0.1;
-      rAnt.rotation.z = Math.sin(t * 1.5 + 0.5) * 0.1;
-      
-      if (isSpeaking) { speakingTime += delta; lClaw.rotation.z = Math.sin(speakingTime * 6) * 0.15; rClaw.rotation.z = Math.sin(speakingTime * 6 + 1) * 0.15; }
-      else { lClaw.rotation.z *= 0.95; rClaw.rotation.z *= 0.95; }
-      
-      renderer.render(scene, camera);
-    }
-    animate();
-    
-    // Chat
-    const msgBox = document.getElementById('chat-messages');
-    const chatInput = document.getElementById('chat-input');
-    const sendBtn = document.getElementById('send-btn');
-    const speechBox = document.getElementById('speech-box');
-    const audioPlayer = document.getElementById('audio-player');
-    
-    function addMsg(text, type) { 
-      const div = document.createElement('div'); 
-      div.className = 'msg ' + type; 
-      div.textContent = text; 
-      msgBox.appendChild(div); 
-      msgBox.scrollTop = msgBox.scrollHeight; 
-    }
-    
-    function showSpeech(text) { 
-      speechBox.textContent = text; 
-      speechBox.classList.add('visible'); 
-      isSpeaking = true; 
-      speakingTime = 0; 
-      setTimeout(() => { speechBox.classList.remove('visible'); isSpeaking = false; }, 4000); 
-    }
-    
-    function hideSpeech() { 
-      speechBox.classList.remove('visible'); 
-      isSpeaking = false; 
-      waveformContainer.classList.remove('active'); 
-    }
-    
-    // Sync with Telegram - poll for new messages
-    let lastMessageId = null;
-    
-    async function pollMessages() {
-      try {
-        const resp = await fetch('/api/messages?since=' + (lastMessageId || ''));
-        if (resp.ok) {
-          const data = await resp.json();
-          if (data.messages && data.messages.length > 0) {
-            data.messages.forEach(msg => {
-              if (msg.from === 'telegram') {
-                addMsg('[TG] ' + msg.text, msg.role === 'user' ? 'user' : 'sid');
-              }
-              lastMessageId = msg.id;
-            });
-          }
-        }
-      } catch (e) { /* ignore */ }
-    }
-    
-    // Poll every 3 seconds
-    setInterval(pollMessages, 3000);
-    
-    async function sendChat() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-      chatInput.value = '';
-      sendBtn.disabled = true;
-      addMsg(text, 'user');
-      
-      if (text.toLowerCase().includes('build') || text.toLowerCase().includes('create') || text.toLowerCase().includes('make')) {
-        addMsg("On it! Check the terminal 👉", 'sid');
-        showSpeech("Let me cook something up! 🦞");
-        await askSidToBuild(text);
-      } else {
-        try {
-          const resp = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) });
-          const data = await resp.json();
-          addMsg(data.reply, 'sid');
-          showSpeech(data.reply);
-        } catch {
-          addMsg("Oops, brain freeze! 🦞", 'sid');
-        }
-      }
-      sendBtn.disabled = false;
-      chatInput.focus();
-    }
-    
-    sendBtn.onclick = sendChat;
-    chatInput.onkeypress = e => { if (e.key === 'Enter') sendChat(); };
+    // Boot
+    boot();
   </script>
 </body>
 </html>
