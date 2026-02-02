@@ -1,13 +1,16 @@
 {
   "version": 2,
-  "buildCommand": "",
-  "outputDirectory": ".",
   "routes": [
-    { "src": "/", "dest": "/lobster-head/index.html" },
-    { "src": "/avatar/?", "dest": "/avatar/index.html" },
-    { "src": "/dashboard/?", "dest": "/dashboard/index.html" },
-    { "src": "/lobster-head/?", "dest": "/lobster-head/index.html" },
-    { "src": "/voice-samples/?", "dest": "/voice-samples/index.html" },
-    { "src": "/(.*)", "dest": "/$1" }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/lobster-head/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
+      ]
+    }
   ]
 }

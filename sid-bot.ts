@@ -279,6 +279,7 @@ async function main() {
     process.exit(1);
   }
 
+  console.log(`🔑 Groq key: ${GROQ_KEY ? 'SET' : 'NOT SET'}`);
   console.log(`🔑 Anthropic key: ${ANTHROPIC_KEY ? 'SET' : 'NOT SET'}`);
   
   loadMemory();
