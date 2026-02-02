@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/lobster-head/$1" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/lobster-head/$1" }
   ],
   "headers": [
     {
