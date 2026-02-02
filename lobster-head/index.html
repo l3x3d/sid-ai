@@ -101,6 +101,18 @@
       background: #0a1018;
       border-top: 1px solid #1a2a4a;
     }
+    #voice-toggle {
+      background: #1a2a3a;
+      border: 1px solid #2a3a4a;
+      color: #888;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      transition: all 0.2s;
+    }
+    #voice-toggle.active { color: #ff6b4a; border-color: #ff6b4a; }
     #chat-input {
       flex: 1;
       background: #1a2a3a;
@@ -217,6 +229,7 @@
         <div class="msg sid"><span class="lobster">🦞</span> Yo! I'm Sid. Ask me to build something - a game, a tool, whatever you want!</div>
       </div>
       <div id="input-area">
+        <button id="voice-toggle" class="active" title="Voice on/off">🔊</button>
         <input type="text" id="chat-input" placeholder="Build me a..." autocomplete="off">
         <button id="send-btn">➤</button>
       </div>
@@ -392,6 +405,44 @@
       }
     }
     
+    // Voice playback
+    let audioPlayer = null;
+    let voiceEnabled = true;
+    const voiceToggle = document.getElementById('voice-toggle');
+    
+    voiceToggle.onclick = () => {
+      voiceEnabled = !voiceEnabled;
+      voiceToggle.classList.toggle('active', voiceEnabled);
+      voiceToggle.textContent = voiceEnabled ? '🔊' : '🔇';
+    };
+    
+    async function playVoice(text) {
+      if (!voiceEnabled) return;
+      if (text.length < 5 || text.length > 200) return;
+      
+      try {
+        const resp = await fetch('/api/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+        
+        if (!resp.ok) return;
+        
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        
+        if (!audioPlayer) {
+          audioPlayer = new Audio();
+        }
+        audioPlayer.src = url;
+        audioPlayer.play().catch(() => {});
+        
+      } catch (e) {
+        // Silent fail
+      }
+    }
+    
     // Chat with SID
     async function chatWithSid(text) {
       showTyping();
@@ -405,7 +456,11 @@
         
         const data = await resp.json();
         hideTyping();
-        addMsg(data.reply || "...", 'sid');
+        const reply = data.reply || "...";
+        addMsg(reply, 'sid');
+        
+        // Play voice for responses
+        playVoice(reply);
         
       } catch (e) {
         hideTyping();
