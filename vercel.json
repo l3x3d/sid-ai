@@ -3,7 +3,7 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "routes": [
-    { "src": "/", "dest": "/dashboard/index.html" },
+    { "src": "/", "dest": "/lobster-head/index.html" },
     { "src": "/avatar/?", "dest": "/avatar/index.html" },
     { "src": "/dashboard/?", "dest": "/dashboard/index.html" },
     { "src": "/lobster-head/?", "dest": "/lobster-head/index.html" },
